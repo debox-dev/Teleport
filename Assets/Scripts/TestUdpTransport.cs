@@ -14,10 +14,7 @@ namespace DeBox.Teleport.Tests
         private bool _isOn;
         private float _nextSendTime;
 
-        //private BaseTeleportChannel _clientChannel = new SequencedTeleportChannel(new SimpleTeleportChannel());
-        //private BaseTeleportChannel _serverChannel = new SequencedTeleportChannel(new SimpleTeleportChannel());
-        private BaseTeleportChannel _clientChannel = new SimpleTeleportChannel();
-        private BaseTeleportChannel _serverChannel = new SimpleTeleportChannel();
+
 
         private TeleportUdpTransport _serverTransport;
         private TeleportUdpTransport _clientTransport;
@@ -30,25 +27,19 @@ namespace DeBox.Teleport.Tests
                 _start = false;
                 StartCoroutine(TestCoro());
             }
-            while (_serverChannel.IncomingMessageCount > 0)
-            {
-                _serverChannel.GetNextIncomingData();
-                Debug.Log("Server got data!");
-            }
-            while (_clientChannel.IncomingMessageCount > 0)
-            {
-                _clientChannel.GetNextIncomingData();
-                Debug.Log("Client got data!");
-            }
             if (!_isOn)
             {
                 return;
             }
+ 
+
             if (Time.time > _nextSendTime)
             {
-                _nextSendTime = Time.time + 1;
-                _clientChannel.Send(Serialize);
-                _serverChannel.Send(Serialize);
+                _serverTransport.ProcessIncoming((r) => Debug.Log("server got data"));
+                _clientTransport.ProcessIncoming((r) => Debug.Log("client got data"));
+                _nextSendTime = Time.time + 0.1f;
+                _serverTransport.Send(Serialize);
+                _clientTransport.Send(Serialize);
             }
             
         }
@@ -67,8 +58,8 @@ namespace DeBox.Teleport.Tests
         private IEnumerator TestCoro()
         {
             var port = 5000;
-            _serverTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
-            _clientTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
+            _serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel());
+            _clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel());
             _serverTransport.StartListener(port);
             _clientTransport.StartClient("127.0.0.1", port);
             _nextSendTime = Time.time + 1;

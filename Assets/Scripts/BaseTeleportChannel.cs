@@ -15,18 +15,7 @@ namespace DeBox.Teleport.Transport
 
         public abstract byte[] GetNextOutgoingData();
 
-        public abstract void Send(TeleportWriter writer, MemoryStream stream, Action<TeleportWriter> serializerFunc);
-
-        public void Send(Action<TeleportWriter> serializerFunc)
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var writer = new TeleportWriter(stream))
-                {
-                    Send(writer, stream, serializerFunc);                    
-                }
-            }
-        }
+        public abstract void Send(byte[] data);
     }
 
     public abstract class BaseTeleportProxyChannel : BaseTeleportChannel

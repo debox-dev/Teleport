@@ -6,6 +6,7 @@ using System.Threading;
 using System.IO;
 using UnityEngine;
 using DeBox.Teleport.Transport;
+using DeBox.Teleport.Debugging;
 
 
 namespace DeBox.Teleport
@@ -32,15 +33,60 @@ namespace DeBox.Teleport
         private TransportType _transportType = TransportType.None;
         private Func<BaseTeleportChannel>[] _channelCreators;
         private readonly double _endpointTimeout = 30;
+        private EndpointCollection _endpointCollection = null;
 
         public TeleportUdpTransport(params Func<BaseTeleportChannel>[] channelCreators)
         {
             _channelCreators = channelCreators;
         }
 
+        public void Send(Action<TeleportWriter> serializer, byte channelId = 0)
+        {
+            byte[] data;
+            using (var stream = new MemoryStream())
+            {
+                using (var writer = new TeleportWriter(stream))
+                {
+                    serializer(writer);
+                    data = stream.ToArray();
+                }
+            }
+            foreach (var ep in _endpointCollection.GetEndpoints())
+            {
+                var channel = _endpointCollection.GetChannelOfEndpoint(ep, channelId);
+                channel.Send(data);
+            }
+        }
+
+        public void ProcessIncoming(Action<TeleportReader> deserializer)
+        {
+            foreach (var endpoint in _endpointCollection.GetEndpoints())
+            {
+                var endpointChannels = _endpointCollection.GetChannelsOfEndpoint(endpoint);
+                for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
+                {
+                    var channel = _endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
+                    if (channel.IncomingMessageCount > 0)
+                    {
+                        var next = channel.GetNextIncomingData();
+                        deserializer(next);
+                    }
+                }
+            }
+        }
+
+        public void Send(byte[] data, byte channelId = 0)
+        {
+            foreach (var ep in _endpointCollection.GetEndpoints())
+            {
+                var channel = _endpointCollection.GetChannelOfEndpoint(ep, channelId);
+                channel.Send(data);
+            }
+        }
+
         public void InternalListen(object portObj)
         {
-            EndpointCollection endpointCollection = new EndpointCollection(_endpointTimeout, _channelCreators);
+            _endpointCollection = new EndpointCollection(_endpointTimeout, _channelCreators);
             _transportType = TransportType.Server;
             var port = (int)portObj;
             
@@ -57,13 +103,13 @@ namespace DeBox.Teleport
             _stopRequested = false;
             while (!_stopRequested)
             {
-                SendOutgoingDataAllChannelsOfAllEndpoints(socket, endpointCollection);
+                SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
                 data = new byte[1024];
 
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.ReceiveFrom(data, ref endpoint);
-                    ReceiveIncomingData(data, endpoint, endpointCollection);
+                    ReceiveIncomingData(data, endpoint, _endpointCollection);
                 }
             }
         }
@@ -74,20 +120,32 @@ namespace DeBox.Teleport
             channel.Receive(reader);
         }
 
-        private void ReceiveIncomingData(Byte[] data, EndPoint endpoint, EndpointCollection endpointCollection)
+        private void ReceiveIncomingData(byte[] data, EndPoint endpoint, EndpointCollection endpointCollection)
         {
+            byte[] header = new byte[2];
             endpointCollection.Ping(endpoint);
-            var stream = new MemoryStream(data);
+
+            header[0] = data[0];
+            header[1] = data[1];
+            var strippedData = new byte[data.Length - header.Length];
+            Array.Copy(data, header.Length, strippedData, 0, strippedData.Length);
+            var stream = new MemoryStream(strippedData);
             var reader = new TeleportReader(stream);
-            var header = reader.ReadByte();
-            byte channelId = (byte)(header & 0b11);
+            byte channelId = (byte)(header[0] & 0b11);
+            var checksumFromData = header[1];
+            var calculatedChecksum = Checksum(data, header.Length, data.Length - header.Length);
+            if (checksumFromData != calculatedChecksum)
+            {
+                Debug.LogError("Checksum mismatch, got: " + checksumFromData + " expected: " + calculatedChecksum + " " + TeleportDebugUtils.DebugString(data));
+                return;
+            }
             var endpointChannel = endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
             ReceiveIncomingChannelData(endpointChannel, reader, endpoint, endpointCollection);            
         }
 
         private void SendOutgoingDataAllChannelsOfAllEndpoints(Socket socket, EndpointCollection endpointCollection)
         {
-            byte header;
+            byte[] header = new byte[2];
             byte[] data;
             byte[] internalData;
             BaseTeleportChannel channel;
@@ -96,24 +154,44 @@ namespace DeBox.Teleport
                 var endpointChannels = endpointCollection.GetChannelsOfEndpoint(endpoint);
                 for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
                 {
-                    header = channelId;
+                    header[0] = channelId;
+                    
                     channel = endpointChannels[channelId];
                     while (channel.OutgoingMessageCount > 0)
                     {
                         internalData = channel.GetNextOutgoingData();
-                        data = new byte[internalData.Length + 1];
-                        data[0] = header;
-                        Array.Copy(internalData, 0, data, 1, internalData.Length);
+                        header[1] = Checksum(internalData, 0, internalData.Length, channelId);
+                        data = new byte[internalData.Length + header.Length];
+                        data[0] = header[0];
+                        data[1] = header[1];
+                        Array.Copy(internalData, 0, data, header.Length, internalData.Length);
                         socket.SendTo(data, data.Length, SocketFlags.None, endpoint);
                     }
                 }
             }
             
         }
-       
+
+        private byte Checksum(byte[] data, long startOffset, long amount, params byte[] additional)
+        {
+            byte checksumCalculated = 0;
+            unchecked
+            {
+                for (long i = startOffset; i < amount; i++)
+                {
+                    checksumCalculated += data[i];
+                }
+                for (long i = 0; i < additional.Length; i++)
+                {
+                    checksumCalculated += additional[i];
+                }
+            }
+            return checksumCalculated;
+        }
+
         private void InternalClient(object clientParamsObj)
         {
-            var endpointCollection = new EndpointCollection(_endpointTimeout, _channelCreators);
+            _endpointCollection = new EndpointCollection(_endpointTimeout, _channelCreators);
             
             var clientParams = (ClientParams)clientParamsObj;
             var udpClient = new UdpClient();
@@ -122,19 +200,19 @@ namespace DeBox.Teleport
             byte[] data;
             _transportType = TransportType.Client;
             socket.Connect(endpoint);
-            endpointCollection.Ping(endpoint);
+            _endpointCollection.Ping(endpoint);
 
             int receivedDataLength;
             _stopRequested = false;
             while (!_stopRequested)
             {
-                SendOutgoingDataAllChannelsOfAllEndpoints(socket, endpointCollection);
+                SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
                 data = new byte[1024];
 
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.Receive(data);
-                    ReceiveIncomingData(data, endpoint, endpointCollection);
+                    ReceiveIncomingData(data, endpoint, _endpointCollection);
                 }
             }
         }

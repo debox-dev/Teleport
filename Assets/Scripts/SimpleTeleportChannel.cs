@@ -23,8 +23,6 @@ namespace DeBox.Teleport.Transport
 
         public override void Receive(TeleportReader reader)
         {
-            
-            PreReceive(reader);
             _receiveQueue.Enqueue(reader);
         }
 
@@ -38,20 +36,9 @@ namespace DeBox.Teleport.Transport
             return _sendQueue.Dequeue();
         }
 
-        public override void Send(TeleportWriter writer, MemoryStream stream, Action<TeleportWriter> serializerFunc)
+        public override void Send(byte[] data)
         {
-            serializerFunc?.Invoke(writer);
-            _sendQueue.Enqueue(PreSend(stream.ToArray()));
-        }
-
-        protected virtual byte[] PreSend(byte[] data)
-        {
-            return data;
-        }
-
-        protected virtual void PreReceive(TeleportReader reader)
-        {
-
+            _sendQueue.Enqueue(data);
         }
     }
 }

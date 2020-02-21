@@ -31,7 +31,7 @@ namespace DeBox.Collections
             {
                 if (_enqueueIndex == ENQUEUE_INDEX_FULL_INDECATION)
                 {
-                    throw new Exception("Queue is empty");
+                    throw new Exception("Queue is full");
                 }
                 _queue[_enqueueIndex] = item;
                 _enqueueIndex = GetNextIndex(_enqueueIndex);

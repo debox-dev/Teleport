@@ -18,6 +18,7 @@ namespace DeBox.Teleport.Transport
         {
             SecondsTimeout = secondsTimeout;
             _endpointPings = new Dictionary<EndPoint, double>();
+            _endpointChannels = new Dictionary<EndPoint, BaseTeleportChannel[]>();
             _epocDateTime = new DateTime(1970, 1, 1);
             _channelCreators = channelCreators;
         }
