@@ -21,6 +21,7 @@ namespace DeBox.Teleport.Transport
 
         public override void Receive(byte[] data, int startIndex, int length)
         {
+            //UnityEngine.Debug.LogError("Receive: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(data, startIndex, length));
             var strippedData = new byte[length];
             Array.Copy(data, startIndex, strippedData, 0, length);
             _receiveQueue.Enqueue(strippedData);
@@ -39,6 +40,12 @@ namespace DeBox.Teleport.Transport
         public override void Send(byte[] data)
         {
             _sendQueue.Enqueue(data);
+        }
+
+        public override byte[] PrepareToSend(byte[] data)
+        {
+            //UnityEngine.Debug.LogError("Prepare: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(data));
+            return data;
         }
     }
 }

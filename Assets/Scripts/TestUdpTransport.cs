@@ -75,8 +75,12 @@ namespace DeBox.Teleport.Tests
         {
             didClientSend = false;
             var port = 5000;
-            _serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel());
-            _clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel());
+            //_serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            //_clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            _serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new AggregatingTeleportChannel(new SimpleTeleportChannel())));
+            _clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new AggregatingTeleportChannel(new SimpleTeleportChannel())));
+            //_serverTransport = new TeleportUdpTransport(() => new AggregatingTeleportChannel(new SimpleTeleportChannel()));
+            //_clientTransport = new TeleportUdpTransport(() =>new AggregatingTeleportChannel(new SimpleTeleportChannel()));
             _serverTransport.StartListener(port);
             _clientTransport.StartClient("127.0.0.1", port);
             _nextSendTime = Time.time + 1;

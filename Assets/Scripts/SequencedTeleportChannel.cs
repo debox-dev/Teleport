@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
-using DeBox.Teleport.Debugging;
 using DeBox.Collections;
 
 namespace DeBox.Teleport.Transport
@@ -30,6 +28,7 @@ namespace DeBox.Teleport.Transport
         private Dictionary<ushort, OutboxItem> _outbox;
         private bool _sendAcks;
         private object _outboxLock;
+        private ArrayQueue<ushort> _pendingAcksQueue;
 
         public SequencedTeleportChannel() : this(new SimpleTeleportChannel()) { }
 
@@ -46,46 +45,75 @@ namespace DeBox.Teleport.Transport
             _inbox = new Dictionary<ushort, InboxItem>();
             _outbox = new Dictionary<ushort, OutboxItem>();
             _outboxLock = new object();
+            _pendingAcksQueue = new ArrayQueue<ushort>(1024);
         }
 
         public override void Receive(byte[] data, int startIndex, int length)
         {
-            //Debug.LogError("RECV: " + TeleportDebugUtils.DebugString(reader));            
+            //UnityEngine.Debug.LogError("Receive: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(data, startIndex, length));
             var processedLength = 0;
-            var sequenceNumber = BitConverter.ToUInt16(data, startIndex);
-            processedLength += sizeof(ushort);
-            if (_sendAcks && sequenceNumber == ushort.MaxValue)
-            {                
-                Debug.LogError("GOT ACK!");
+            ushort sequenceNumber;
+            
+            if (_sendAcks && data[startIndex] == 0xff && data[startIndex + 1] == 0xff)
+            {
+                
                 lock (_outboxLock)
                 {
-                    sequenceNumber = BitConverter.ToUInt16(data, startIndex + processedLength);
+                    sequenceNumber = BitConverter.ToUInt16(data, startIndex + 2);
                     _outbox.Remove(sequenceNumber);
-                }                
+                }
                 return;
             }
+            sequenceNumber = BitConverter.ToUInt16(data, startIndex);
+            processedLength += sizeof(ushort);
             if (_inbox.ContainsKey(sequenceNumber))
             {
                 Debug.LogWarning("Got same sequence twice: " + sequenceNumber);
             }
-            _inbox[sequenceNumber] = new InboxItem() { data = data, startIndex = startIndex, length = length - processedLength };
+            //Debug.LogError("Add to inbox: " + Debugging.TeleportDebugUtils.DebugString(data, startIndex + processedLength, length - processedLength));
+            _inbox[sequenceNumber] = new InboxItem() { data = data, startIndex = startIndex + processedLength, length = length - processedLength };
             if (sequenceNumber > _lastReceiveIndex)
             {
                 _lastReceiveIndex = sequenceNumber;
             }
             if (_sendAcks)
             {
-                byte[] ackData = new byte[4];
-                Array.Copy(BitConverter.GetBytes(ushort.MaxValue), ackData, 2);
+                byte[] ackData = new byte[] { 0xff, 0xff, 0, 0 };
                 Array.Copy(BitConverter.GetBytes(sequenceNumber), 0, ackData, 2, 2);
-                InternalChannel.Send(ackData);
+                Send(ackData);
+                //_pendingAcksQueue.Enqueue(sequenceNumber);           
                 ProcessOutbox();
             }            
             ProcessInbox();
+            
+        }
+
+        public override void Upkeep()
+        {
+            InternalChannel.Upkeep();
+            int maxAcks = 1;
+            ushort sequenceNumber;
+            while (_pendingAcksQueue.Count > 0 && maxAcks > 0)
+            {
+                
+                maxAcks--;
+                sequenceNumber = _pendingAcksQueue.Dequeue();
+                byte[] ackData = new byte[] { 0xff, 0xff, 0, 0 };
+                Array.Copy(BitConverter.GetBytes(sequenceNumber), 0, ackData, 2, 2);
+                Send(PrepareToSend(ackData));
+
+            }
         }
 
         public override void Send(byte[] data)
         {
+            InternalChannel.Send(data);
+            ProcessOutbox();
+        }
+
+        public override byte[] PrepareToSend(byte[] data)
+        {
+            data = InternalChannel.PrepareToSend(data);
             byte[] sequenceBytes = BitConverter.GetBytes(_outgoingSequence);
             var newData = new byte[data.Length + sequenceBytes.Length];
             Array.Copy(sequenceBytes, 0, newData, 0, sequenceBytes.Length);
@@ -98,13 +126,13 @@ namespace DeBox.Teleport.Transport
                 }
             }
             _outgoingSequence++;
-            InternalChannel.Send(newData);
-            ProcessOutbox();
+            //UnityEngine.Debug.LogError("Prepare: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(newData));
+            return newData;
         }
 
         private void ProcessOutbox()
         {
-            if (_outbox.Count == 0)
+            if (_outbox.Count == 0 || !_sendAcks)
             {
                 return;
             }
@@ -116,7 +144,7 @@ namespace DeBox.Teleport.Transport
                 {
                     seqId = p.Key;
                     outboxItem = p.Value;
-                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 10000000)                    
+                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 10000000000)                    
                     {
                         outboxItem.lastSendTime = DateTime.UtcNow.Ticks;
                         InternalChannel.Send(outboxItem.data);

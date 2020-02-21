@@ -54,7 +54,7 @@ namespace DeBox.Teleport
             foreach (var ep in _endpointCollection.GetEndpoints())
             {
                 var channel = _endpointCollection.GetChannelOfEndpoint(ep, channelId);
-                channel.Send(data);
+                channel.Send(channel.PrepareToSend(data));
             }
         }
 
@@ -116,6 +116,19 @@ namespace DeBox.Teleport
                 {
                     receivedDataLength = socket.ReceiveFrom(data, ref endpoint);
                     ReceiveIncomingData(data, receivedDataLength, endpoint, _endpointCollection);
+                }
+
+                Upkeep();
+            }
+        }
+
+        private void Upkeep()
+        {
+            foreach (var ep in _endpointCollection.GetEndpoints())
+            {
+                foreach (var channel in _endpointCollection.GetChannelsOfEndpoint(ep))
+                {
+                    channel.Upkeep();
                 }
             }
         }
@@ -220,6 +233,8 @@ namespace DeBox.Teleport
                     receivedDataLength = socket.Receive(data);
                     ReceiveIncomingData(data, receivedDataLength, endpoint, _endpointCollection);
                 }
+
+                Upkeep();
             }
         }
 

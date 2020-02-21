@@ -22,10 +22,15 @@ namespace DeBox.Teleport.Debugging
 
         public static string DebugString(byte[] data)
         {
+            return DebugString(data, 0, data.Length);
+        }
+
+        public static string DebugString(byte[] data, int startIndex, int length)
+        {
             string result = string.Empty;
-            for (int i = 0; i < data.Length; i++)
+            for (int i = startIndex; i < startIndex + length; i++)
             {
-                if (i > 0)
+                if (i > startIndex)
                 {
                     result += ", ";
                 }

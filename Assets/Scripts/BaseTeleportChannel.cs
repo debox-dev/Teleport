@@ -13,6 +13,13 @@
         public abstract byte[] GetNextOutgoingData();
 
         public abstract void Send(byte[] data);
+
+        public abstract byte[] PrepareToSend(byte[] data);
+
+        public virtual void Upkeep()
+        {
+
+        }
     }
 
     public abstract class BaseTeleportProxyChannel : BaseTeleportChannel
@@ -36,6 +43,11 @@
         public override byte[] GetNextOutgoingData()
         {
             return InternalChannel.GetNextOutgoingData();
+        }
+
+        public override void Send(byte[] data)
+        {
+            InternalChannel.Send(data);
         }
     }
 }
