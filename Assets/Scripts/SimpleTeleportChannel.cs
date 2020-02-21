@@ -1,19 +1,17 @@
 ﻿using System;
-
-using System.IO;
 using DeBox.Collections;
 
 namespace DeBox.Teleport.Transport
 {
     public class SimpleTeleportChannel : BaseTeleportChannel
     {
-        private ArrayQueue<TeleportReader> _receiveQueue;
+        private ArrayQueue<byte[]> _receiveQueue;
 
         private ArrayQueue<byte[]> _sendQueue;
 
         public SimpleTeleportChannel(int maxReceiveBuffer = 1000, int maxSendBuffer = 1000)
         {
-            _receiveQueue = new ArrayQueue<TeleportReader>(maxReceiveBuffer);
+            _receiveQueue = new ArrayQueue<byte[]>(maxReceiveBuffer);
             _sendQueue = new ArrayQueue<byte[]>(maxSendBuffer);
         }
 
@@ -21,12 +19,14 @@ namespace DeBox.Teleport.Transport
 
         public override int OutgoingMessageCount => _sendQueue.Count;
 
-        public override void Receive(TeleportReader reader)
+        public override void Receive(byte[] data, int startIndex, int length)
         {
-            _receiveQueue.Enqueue(reader);
+            var strippedData = new byte[length];
+            Array.Copy(data, startIndex, strippedData, 0, length);
+            _receiveQueue.Enqueue(strippedData);
         }
 
-        public override TeleportReader GetNextIncomingData()
+        public override byte[] GetNextIncomingData()
         {
             return _receiveQueue.Dequeue();
         }

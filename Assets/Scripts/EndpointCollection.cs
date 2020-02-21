@@ -13,6 +13,7 @@ namespace DeBox.Teleport.Transport
         private readonly Dictionary<EndPoint, double> _endpointPings;
         private readonly Dictionary<EndPoint, BaseTeleportChannel[]> _endpointChannels;
         private readonly Func<BaseTeleportChannel>[] _channelCreators;
+        private readonly object _lock;
 
         public EndpointCollection(double secondsTimeout, Func<BaseTeleportChannel>[] channelCreators)
         {
@@ -21,16 +22,19 @@ namespace DeBox.Teleport.Transport
             _endpointChannels = new Dictionary<EndPoint, BaseTeleportChannel[]>();
             _epocDateTime = new DateTime(1970, 1, 1);
             _channelCreators = channelCreators;
+            _lock = new object();
         }
 
         public void Ping(EndPoint endpoint)
-        {            
-            if (!_endpointPings.ContainsKey(endpoint))
+        {
+            lock (_lock)
             {
-
-                _endpointChannels[endpoint] = CreateChannels();
+                if (!_endpointPings.ContainsKey(endpoint))
+                { 
+                    _endpointChannels[endpoint] = CreateChannels();
+                }
+                _endpointPings[endpoint] = GetEpoc();
             }
-            _endpointPings[endpoint] = GetEpoc();           
         }
 
         private BaseTeleportChannel[] CreateChannels()
@@ -70,19 +74,23 @@ namespace DeBox.Teleport.Transport
         {
             var endpointsToRemove = new List<EndPoint>();
             var now = GetEpoc();
-            foreach (var pair in _endpointPings)
+            lock (_lock)
             {
-                if (now - pair.Value > timeout)
+                foreach (var pair in _endpointPings)
                 {
-                    endpointsToRemove.Add(pair.Key);
+                    if (now - pair.Value > timeout)
+                    {
+                        endpointsToRemove.Add(pair.Key);
+                    }
+                }
+                foreach (var ep in endpointsToRemove)
+                {
+                    _endpointPings.Remove(ep);
+                    // TODO: Deinit channel
+                    _endpointChannels.Remove(ep);
                 }
             }
-            foreach (var ep in endpointsToRemove)
-            {
-                _endpointPings.Remove(ep);
-                // TODO: Deinit channel
-                _endpointChannels.Remove(ep);
-            }
+
         }
 
     }

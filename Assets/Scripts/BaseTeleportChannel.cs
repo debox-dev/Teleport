@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace DeBox.Teleport.Transport
+﻿namespace DeBox.Teleport.Transport
 {
     public abstract class BaseTeleportChannel : ITeleportChannel
     { 
@@ -9,9 +6,9 @@ namespace DeBox.Teleport.Transport
 
         public abstract int OutgoingMessageCount { get; }
 
-        public abstract void Receive(TeleportReader reader);
+        public abstract void Receive(byte[] data, int startIndex, int length);
 
-        public abstract TeleportReader GetNextIncomingData();
+        public abstract byte[] GetNextIncomingData();
 
         public abstract byte[] GetNextOutgoingData();
 
@@ -31,7 +28,7 @@ namespace DeBox.Teleport.Transport
             InternalChannel = internalChannel;
         }
 
-        public override TeleportReader GetNextIncomingData()
+        public override byte[] GetNextIncomingData()
         {
             return InternalChannel.GetNextIncomingData();
         }

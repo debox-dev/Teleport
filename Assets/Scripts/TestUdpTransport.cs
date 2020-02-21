@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Text;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using DeBox.Teleport.Transport;
 
@@ -14,7 +12,7 @@ namespace DeBox.Teleport.Tests
         private bool _isOn;
         private float _nextSendTime;
 
-
+        bool didClientSend = false;
 
         private TeleportUdpTransport _serverTransport;
         private TeleportUdpTransport _clientTransport;
@@ -31,15 +29,33 @@ namespace DeBox.Teleport.Tests
             {
                 return;
             }
- 
 
+   
             if (Time.time > _nextSendTime)
             {
                 _serverTransport.ProcessIncoming((r) => Debug.Log("server got data"));
                 _clientTransport.ProcessIncoming((r) => Debug.Log("client got data"));
+
                 _nextSendTime = Time.time + 0.1f;
-                _serverTransport.Send(Serialize);
-                _clientTransport.Send(Serialize);
+                if (!didClientSend)
+                {
+                    _clientTransport.Send(Serialize);
+                    didClientSend = true;
+                }
+                for (int i = 0; i < 20; i ++)
+                {
+                    _serverTransport.Send(Serialize);
+
+                }
+
+                for (int i = 0; i < 20; i++)
+                {
+                    _clientTransport.Send(Serialize);
+
+                }
+                //_clientTransport.Send(Serialize);
+                //_clientTransport.Send(Serialize);
+                //_clientTransport.Send(Serialize);
             }
             
         }
@@ -57,6 +73,7 @@ namespace DeBox.Teleport.Tests
 
         private IEnumerator TestCoro()
         {
+            didClientSend = false;
             var port = 5000;
             _serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel());
             _clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel());

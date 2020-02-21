@@ -66,10 +66,16 @@ namespace DeBox.Teleport
                 for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
                 {
                     var channel = _endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
-                    if (channel.IncomingMessageCount > 0)
+                    while (channel.IncomingMessageCount > 0)
                     {
                         var next = channel.GetNextIncomingData();
-                        deserializer(next);
+                        using (var stream = new MemoryStream(next))
+                        {
+                            using (var reader = new TeleportReader(stream))
+                            {
+                                deserializer(reader);
+                            }                                
+                        }                            
                     }
                 }
             }
@@ -89,7 +95,7 @@ namespace DeBox.Teleport
             _endpointCollection = new EndpointCollection(_endpointTimeout, _channelCreators);
             _transportType = TransportType.Server;
             var port = (int)portObj;
-            
+
             byte[] data = new byte[1024];
             IPEndPoint ip = new IPEndPoint(IPAddress.Any, port);
 
@@ -109,43 +115,44 @@ namespace DeBox.Teleport
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.ReceiveFrom(data, ref endpoint);
-                    ReceiveIncomingData(data, endpoint, _endpointCollection);
+                    ReceiveIncomingData(data, receivedDataLength, endpoint, _endpointCollection);
                 }
             }
         }
-
-        private void ReceiveIncomingChannelData(BaseTeleportChannel channel, TeleportReader reader, EndPoint endpoint, EndpointCollection endpointCollection)
+        
+        private void ReceiveIncomingChannelData(BaseTeleportChannel channel, byte[] data, int startIndex, int length, EndPoint endpoint, EndpointCollection endpointCollection)
         {
             endpointCollection.Ping(endpoint);
-            channel.Receive(reader);
+            channel.Receive(data, startIndex, length);
         }
 
-        private void ReceiveIncomingData(byte[] data, EndPoint endpoint, EndpointCollection endpointCollection)
+
+        private void ReceiveIncomingData(byte[] data, int receivedDataLength, EndPoint endpoint, EndpointCollection endpointCollection)
         {
-            byte[] header = new byte[2];
+            byte[] header = new byte[1];
             endpointCollection.Ping(endpoint);
 
+      
+
             header[0] = data[0];
-            header[1] = data[1];
-            var strippedData = new byte[data.Length - header.Length];
+
+            var strippedData = new byte[receivedDataLength - header.Length];
             Array.Copy(data, header.Length, strippedData, 0, strippedData.Length);
-            var stream = new MemoryStream(strippedData);
-            var reader = new TeleportReader(stream);
             byte channelId = (byte)(header[0] & 0b11);
-            var checksumFromData = header[1];
+            var checksumFromData = (header[0] >> 2) & 0b11;
             var calculatedChecksum = Checksum(data, header.Length, data.Length - header.Length);
             if (checksumFromData != calculatedChecksum)
             {
-                Debug.LogError("Checksum mismatch, got: " + checksumFromData + " expected: " + calculatedChecksum + " " + TeleportDebugUtils.DebugString(data));
+                Debug.LogError(_transportType + " Checksum mismatch, got: " + checksumFromData + " expected: " + calculatedChecksum + " " + TeleportDebugUtils.DebugString(data));
                 return;
             }
             var endpointChannel = endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
-            ReceiveIncomingChannelData(endpointChannel, reader, endpoint, endpointCollection);            
+            ReceiveIncomingChannelData(endpointChannel, strippedData, 0, strippedData.Length, endpoint, endpointCollection);            
         }
 
         private void SendOutgoingDataAllChannelsOfAllEndpoints(Socket socket, EndpointCollection endpointCollection)
         {
-            byte[] header = new byte[2];
+            byte[] header = new byte[1];
             byte[] data;
             byte[] internalData;
             BaseTeleportChannel channel;
@@ -154,16 +161,15 @@ namespace DeBox.Teleport
                 var endpointChannels = endpointCollection.GetChannelsOfEndpoint(endpoint);
                 for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
                 {
-                    header[0] = channelId;
                     
                     channel = endpointChannels[channelId];
                     while (channel.OutgoingMessageCount > 0)
                     {
                         internalData = channel.GetNextOutgoingData();
-                        header[1] = Checksum(internalData, 0, internalData.Length, channelId);
+                        header[0] = channelId;
+                        header[0] += (byte)(Checksum(internalData, 0, internalData.Length, channelId) << 2);
                         data = new byte[internalData.Length + header.Length];
                         data[0] = header[0];
-                        data[1] = header[1];
                         Array.Copy(internalData, 0, data, header.Length, internalData.Length);
                         socket.SendTo(data, data.Length, SocketFlags.None, endpoint);
                     }
@@ -186,7 +192,7 @@ namespace DeBox.Teleport
                     checksumCalculated += additional[i];
                 }
             }
-            return checksumCalculated;
+            return (byte)(checksumCalculated % 4);
         }
 
         private void InternalClient(object clientParamsObj)
@@ -212,7 +218,7 @@ namespace DeBox.Teleport
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.Receive(data);
-                    ReceiveIncomingData(data, endpoint, _endpointCollection);
+                    ReceiveIncomingData(data, receivedDataLength, endpoint, _endpointCollection);
                 }
             }
         }
