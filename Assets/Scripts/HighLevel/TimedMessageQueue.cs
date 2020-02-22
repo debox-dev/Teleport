@@ -1,6 +1,6 @@
-﻿using DeBox.Collections;
+﻿using DeBox.Teleport.Core;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 { 
     public class TimedMessageQueue
     {
@@ -19,7 +19,7 @@ namespace DeBox.Teleport.HighLevel
         public void ProcessUntil(float timestamp)
         {
             TimedTeleportMessage message;
-            while (_messageQueue.Count > 0 && _messageQueue.Peek().Timestamp > timestamp)
+            while (_messageQueue.Count > 0 && _messageQueue.Peek().Timestamp < timestamp)
             {
                 message = _messageQueue.Dequeue();
                 message.OnTimedPlayback();

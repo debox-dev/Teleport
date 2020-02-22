@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
-using DeBox.Teleport.Transport;
+using DeBox.Teleport.Core;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 {
     public class TeleportServerProcessor : BaseTeleportProcessor
     {
@@ -49,6 +49,7 @@ namespace DeBox.Teleport.HighLevel
 
         public void SendToAll<T>(T message, byte channelId = 0) where T : ITeleportMessage
         {
+            StampMessageIfTimed(message);
             message.PreSendServer();
             Send(message, channelId);
             message.PostSendServer();
@@ -56,6 +57,7 @@ namespace DeBox.Teleport.HighLevel
 
         public void SendToClient<T>(uint clientId, T message, byte channelId = 0) where T : ITeleportMessage
         {
+            StampMessageIfTimed(message);
             message.PreSendServer();
             SendToClients(message, channelId, clientId);
             message.PostSendServer();
@@ -63,6 +65,7 @@ namespace DeBox.Teleport.HighLevel
 
         public void SendToClients<T>(T message, params uint[] clientIds) where T : ITeleportMessage
         {
+            StampMessageIfTimed(message);
             message.PreSendServer();
             SendToClients(message, 0, clientIds);
             message.PostSendServer();
@@ -70,6 +73,7 @@ namespace DeBox.Teleport.HighLevel
 
         public void SendToClients<T>(T message, byte channelId = 0, params uint[] clientIds) where T : ITeleportMessage
         {
+            StampMessageIfTimed(message);
             message.PreSendServer();
             SendToEndpoints(message.SerializeWithId, channelId, GetEndpointsOfClients(clientIds));
             message.PostSendServer();
@@ -77,6 +81,7 @@ namespace DeBox.Teleport.HighLevel
 
         public void SendToAllExcept<T>(uint clientId, T message, byte channelId = 0, params uint[] excludedClientIds) where T : ITeleportMessage
         {
+            StampMessageIfTimed(message);
             message.PreSendServer();
             var endpointsToSend = GetAllEndpointsExceptExcluded(excludedClientIds);
             var clientData = GetClientData(clientId);
@@ -92,6 +97,15 @@ namespace DeBox.Teleport.HighLevel
                 endpoints[i] = GetClientData(clientIds[i]).endpoint;
             }
             return endpoints;
+        }
+
+        private void StampMessageIfTimed<T>(T message) where T : ITeleportMessage
+        {
+            var timedMessage = message as TimedTeleportMessage;
+            if (timedMessage != null)
+            {
+                timedMessage.SetTimestamp(LocalTime);
+            }
         }
 
         private List<EndPoint> GetAllEndpointsExceptExcluded(params uint[] excludedClientIds)
@@ -232,10 +246,26 @@ namespace DeBox.Teleport.HighLevel
                     CleanupClientData(clientData);
                     OnClientDisconnect(DisconnectReasonType.ClientInitiatedDisconnect);
                     break;
+                case TeleportMsgTypeIds.TimeSync:
+                    ReplyToTimeSyncRequest(sender, reader);
+                    break;
                 default:
                     ProcessMessage(sender, msgTypeId, reader);
                     break;
             }
+        }
+
+        private void ReplyToTimeSyncRequest(EndPoint sender, TeleportReader reader)
+        {
+            var clientTime = reader.ReadSingle();
+            SendToEndpoints((w) => SerializeTimeSyncResponse(w, clientTime), 0, sender);
+        }
+
+        private void SerializeTimeSyncResponse(TeleportWriter writer, float clientTime)
+        {
+            writer.Write(TeleportMsgTypeIds.TimeSync);
+            writer.Write(clientTime);
+            writer.Write(LocalTime);
         }
 
 

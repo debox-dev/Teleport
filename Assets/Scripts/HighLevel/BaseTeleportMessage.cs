@@ -1,6 +1,6 @@
-﻿using DeBox.Teleport.Transport;
+﻿using DeBox.Teleport.Core;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 {
     public abstract class BaseTeleportMessage : ITeleportMessage
     {

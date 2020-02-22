@@ -1,7 +1,9 @@
-﻿using System.Net;
-using DeBox.Teleport.Transport;
+﻿using System;
+using System.Net;
+using UnityEngine;
+using DeBox.Teleport.Core;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 {
     public class TeleportClientProcessor : BaseTeleportProcessor
     {
@@ -12,14 +14,25 @@ namespace DeBox.Teleport.HighLevel
             ServerRequestedDisconnect,
         }
 
+        private const float TIME_SYNC_MESSAGE_RATE_IN_SECONDS = 10;
+        private const float TIME_SYNC_MAX_TIME_DRIFT_BEFORE_HARD_SET_IN_SECONDS = 1;
+        private const float TIME_SYNC_MAX_TIME_DRIFT_MAGNITUDE = 0.1f;
         private byte _authKey;
         private uint _clientId;
         private bool _isAuthenticated;
         private TimedMessageQueue _timedMessageQueue;
+        private float _nextTimeSyncTime;
+        private float _timedMessagePlaybackDelay;
 
-        public TeleportClientProcessor(TeleportUdpTransport transport) : base(transport)
+        public float ServerTime { get; private set; }
+
+        public TeleportClientProcessor(TeleportUdpTransport transport, float timedMessagePlaybackDelay = 0.08f) : base(transport)
         {
+            _isAuthenticated = false;
             _timedMessageQueue = new TimedMessageQueue();
+            ServerTime = -1;
+            _nextTimeSyncTime = -1;
+            _timedMessagePlaybackDelay = timedMessagePlaybackDelay;
         }
 
         public void Connect(string host, int port)
@@ -31,7 +44,16 @@ namespace DeBox.Teleport.HighLevel
         protected override void UnityUpdate()
         {
             base.UnityUpdate();
-            //PlayTimedMessages(0);
+            if (_isAuthenticated && LocalTime > _nextTimeSyncTime)
+            {
+                _nextTimeSyncTime = LocalTime + TIME_SYNC_MESSAGE_RATE_IN_SECONDS;
+                SendTimesyncRequest();
+            }
+            if (ServerTime > 0)
+            {
+                ServerTime += Time.fixedDeltaTime;
+                PlayTimedMessages(ServerTime - _timedMessagePlaybackDelay);
+            }            
         }
 
         public void Disconnect()
@@ -87,6 +109,17 @@ namespace DeBox.Teleport.HighLevel
 
         }
 
+        private void SendTimesyncRequest()
+        {
+            Send(SerializeTimeSyncRequest);
+        }
+
+        private void SerializeTimeSyncRequest(TeleportWriter writer)
+        {
+            writer.Write(TeleportMsgTypeIds.TimeSync);
+            writer.Write(LocalTime);
+        }
+
         private void ProcessHandshake(TeleportReader reader)
         {
             _authKey = reader.ReadByte();
@@ -127,9 +160,33 @@ namespace DeBox.Teleport.HighLevel
                 case TeleportMsgTypeIds.Disconnect:
                     Disconnect(DisconnectReasonType.ServerRequestedDisconnect);
                     break;
+                case TeleportMsgTypeIds.TimeSync:
+                    HandleTimeSyncReponse(reader);
+                    break;
                 default:
                     ProcessMessage(sender, msgTypeId, reader);
                     break;
+            }
+        }
+
+        private void HandleTimeSyncReponse(TeleportReader reader)
+        {
+            var clientTimeOnRequestSent = reader.ReadSingle();
+            var serverTimeOnRequestArrival = reader.ReadSingle();
+            var clientTimeOnResponseArrival = LocalTime;
+            var totalRoundtripDuration = clientTimeOnResponseArrival - clientTimeOnRequestSent;
+            var estimatedReturnTripDuration = totalRoundtripDuration * 0.5f;
+            var estimatedServerTime = serverTimeOnRequestArrival + estimatedReturnTripDuration;
+            var delta = estimatedServerTime - ServerTime;
+            var absDelta = Math.Abs(delta);
+            var deltaSign = Math.Sign(delta);
+            if (absDelta > TIME_SYNC_MAX_TIME_DRIFT_BEFORE_HARD_SET_IN_SECONDS)
+            {
+                ServerTime = estimatedServerTime;
+            }
+            else
+            {
+                ServerTime += Math.Max(absDelta, TIME_SYNC_MAX_TIME_DRIFT_MAGNITUDE) * deltaSign;
             }
         }
     }

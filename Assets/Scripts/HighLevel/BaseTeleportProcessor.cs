@@ -1,13 +1,16 @@
-﻿using DeBox.Teleport.Transport;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using UnityEngine;
+using DeBox.Teleport.Core;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 {
     public abstract class BaseTeleportProcessor
     {
+        public float LocalTime => Time.fixedTime;
+
         protected readonly TeleportUdpTransport _transport;
         private Dictionary<byte, Action<EndPoint, TeleportReader>> _incomingMessageProcessors;
         private TeleportUnityHelper _unityHelper;

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 {
     public class TeleportUnityHelper : MonoBehaviour
     {

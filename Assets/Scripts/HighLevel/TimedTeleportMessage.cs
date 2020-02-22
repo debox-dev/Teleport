@@ -1,7 +1,7 @@
-﻿using DeBox.Teleport.Transport;
-using System;
+﻿using System;
+using DeBox.Teleport.Core;
 
-namespace DeBox.Teleport.HighLevel
+namespace DeBox.Teleport
 {
     public abstract class TimedTeleportMessage : BaseTeleportMessage
     {
@@ -13,6 +13,11 @@ namespace DeBox.Teleport.HighLevel
         }
 
         public TimedTeleportMessage(float timestamp)
+        {
+            SetTimestamp(timestamp);
+        }
+
+        public void SetTimestamp(float timestamp)
         {
             Timestamp = timestamp;
         }
