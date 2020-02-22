@@ -6,6 +6,10 @@ namespace DeBox.Teleport.Core
 {
     public class TeleportReader : BinaryReader
     {
+        public TeleportReader(byte[] input) : base(new MemoryStream(input))
+        {
+        }
+
         public TeleportReader(Stream input) : base(input)
         {
         }
@@ -16,6 +20,12 @@ namespace DeBox.Teleport.Core
 
         public TeleportReader(Stream input, Encoding encoding, bool leaveOpen) : base(input, encoding, leaveOpen)
         {
+        }
+
+        public byte[] ReadBytesAndSize()
+        {
+            byte length = base.ReadByte();
+            return base.ReadBytes(length);
         }
 
         public Vector4 ReadQuaternion()

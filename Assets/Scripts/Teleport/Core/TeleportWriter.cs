@@ -7,6 +7,10 @@ namespace DeBox.Teleport.Core
 
     public class TeleportWriter : BinaryWriter
     {
+        public TeleportWriter() : base()
+        {
+        }
+
         public TeleportWriter(Stream output) : base(output)
         {
         }
@@ -19,16 +23,18 @@ namespace DeBox.Teleport.Core
         {
         }
 
-        protected TeleportWriter()
-        {
-        }
-
         public void Write(Vector4 data)
         {
             base.Write(data.x);
             base.Write(data.y);
             base.Write(data.z);
             base.Write(data.w);
+        }
+
+        public void WriteBytesAndSize(byte[] data, byte length)
+        {
+            base.Write(length);
+            base.Write(data);
         }
 
         public void Write(Vector3 data)

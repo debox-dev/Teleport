@@ -7,12 +7,23 @@ namespace DeBox.Teleport
 {
     public class TeleportClientProcessor : BaseTeleportProcessor
     {
+        public enum StateType
+        {
+            Disconnected,
+            Connecting,
+            Connected,
+        }
+
         public enum DisconnectReasonType
         {
             ClientSideDisconnectRequested,
             ServerTimeout,
             ServerRequestedDisconnect,
         }
+
+        public event Action<uint> ConnectedToServer;
+        public event Action<uint, DisconnectReasonType> DisconnectedFromServer;
+        public event Action<ITeleportMessage> MessageArrived;
 
         private const float TIME_SYNC_MESSAGE_RATE_IN_SECONDS = 10;
         private const float TIME_SYNC_MAX_TIME_DRIFT_BEFORE_HARD_SET_IN_SECONDS = 1;
@@ -24,10 +35,12 @@ namespace DeBox.Teleport
         private float _nextTimeSyncTime;
         private float _timedMessagePlaybackDelay;
 
+        public StateType State { get; private set; }
         public float ServerTime { get; private set; }
 
         public TeleportClientProcessor(TeleportUdpTransport transport, float timedMessagePlaybackDelay = 0.08f) : base(transport)
         {
+            State = StateType.Disconnected;
             _isAuthenticated = false;
             _timedMessageQueue = new TimedMessageQueue();
             ServerTime = -1;
@@ -38,6 +51,7 @@ namespace DeBox.Teleport
         public void Connect(string host, int port)
         {
             StartUnityHelper("Client");
+            State = StateType.Connecting;
             _transport.StartClient(host, port);
         }
 
@@ -71,6 +85,7 @@ namespace DeBox.Teleport
         protected void Disconnect(DisconnectReasonType reason)
         {
             _transport.StopClient();
+            State = StateType.Disconnected;
             OnDisconnect(reason);
         }
 
@@ -85,8 +100,20 @@ namespace DeBox.Teleport
             message.PostSendClient();
         }
 
-        protected virtual void OnConnectionEstablisehd(uint clientId) { }
-        protected virtual void OnDisconnect(DisconnectReasonType reason) {}
+        protected virtual void OnConnectionEstablisehd(uint clientId)
+        {
+            ConnectedToServer?.Invoke(clientId);
+        }
+
+        protected virtual void OnDisconnect(DisconnectReasonType reason)
+        {
+            DisconnectedFromServer?.Invoke(_clientId, reason);
+        }
+
+        protected virtual void OnMessageArrival(ITeleportMessage message)
+        {
+            MessageArrived?.Invoke(message);
+        }
 
         protected sealed override void OnMessageArrival(EndPoint endpoint, ITeleportMessage message)
         {
@@ -104,10 +131,7 @@ namespace DeBox.Teleport
             }
         }
 
-        protected virtual void OnMessageArrival(ITeleportMessage message)
-        {
 
-        }
 
         private void SendTimesyncRequest()
         {
@@ -125,6 +149,7 @@ namespace DeBox.Teleport
             _authKey = reader.ReadByte();
             _clientId = reader.ReadUInt32();
             _isAuthenticated = true;
+            State = StateType.Connected;
         }
 
         private void SendHandshake()

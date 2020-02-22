@@ -61,7 +61,7 @@ namespace DeBox.Teleport
             _transport.ProcessIncoming(InternalHandleIncomingMessage);
         }
 
-        public void RegisterMessage<T>(Action<EndPoint, TeleportReader> processor = null) where T : ITeleportMessage, new()
+        public byte RegisterMessage<T>(Action<EndPoint, TeleportReader> processor = null) where T : ITeleportMessage, new()
         {
             var dummyMsg = new T();
             var msgTypeId = dummyMsg.MsgTypeId;
@@ -70,6 +70,19 @@ namespace DeBox.Teleport
                 processor = ProcessIncomingMessage<T>;
             }
             _incomingMessageProcessors[msgTypeId] = processor;
+            return msgTypeId;
+        }
+
+        public void UnregisterMessage(byte msgTypeId)
+        {
+            _incomingMessageProcessors.Remove(msgTypeId);
+        }
+
+        public void UnregisterMessage<T>() where T : ITeleportMessage, new()
+        {
+            var dummyMsg = new T();
+            var msgTypeId = dummyMsg.MsgTypeId;
+            UnregisterMessage(msgTypeId);
         }
 
         private void ProcessIncomingMessage<T>(EndPoint endpoint, TeleportReader reader) where T : ITeleportMessage, new()

@@ -23,6 +23,11 @@ namespace DeBox.Teleport
             public byte authKey;
         }
 
+        public event Action<uint, EndPoint> ClientConnected;
+        public event Action<uint, DisconnectReasonType> ClientDisconnected;
+        public event Action<uint, EndPoint, ITeleportMessage> MessageArrived;
+
+        public bool IsListening { get; private set; }
 
         private uint _nextClientId;
         private Dictionary<EndPoint, TeleportClientData> _clientDataByEndpoint;
@@ -39,10 +44,12 @@ namespace DeBox.Teleport
         {
             StartUnityHelper("Server");
             _transport.StartListener(port);
+            IsListening = true;
         }
 
         public void StopListening()
         {
+            IsListening = false;
             StopUnityHelper();
             _transport.StopListener();
         }
@@ -140,7 +147,7 @@ namespace DeBox.Teleport
             var reason = DisconnectReasonType.ServerWantsToDisconnectClient;
             SendDisconnectToClient(0, clientData.endpoint, reason);
             CleanupClientData(clientData);
-            OnClientDisconnect(reason);
+            OnClientDisconnect(clientData.clientId, reason);
         }
 
         private TeleportClientData GetClientData(uint clientId)
@@ -176,9 +183,19 @@ namespace DeBox.Teleport
             message.OnArrivalToServer(clientData.clientId);
         }
 
-        protected virtual void OnClientDisconnect(DisconnectReasonType reason) { }
-        protected virtual void OnMessageArrival(uint clientId, EndPoint endpoint, ITeleportMessage message) { }
-        protected virtual void OnClientConnected(uint clientId, EndPoint endpoint) { }
+        protected virtual void OnClientDisconnect(uint clientId, DisconnectReasonType reason)
+        {
+            ClientDisconnected?.Invoke(clientId, reason);
+        }
+
+        protected virtual void OnMessageArrival(uint clientId, EndPoint endpoint, ITeleportMessage message)
+        {
+            MessageArrived?.Invoke(clientId, endpoint, message);
+        }
+        protected virtual void OnClientConnected(uint clientId, EndPoint endpoint)
+        {
+            ClientConnected?.Invoke(clientId, endpoint);
+        }
 
         private TeleportClientData PerformFirstMessageAuthentication(EndPoint sender, TeleportReader reader)
         {
@@ -244,7 +261,7 @@ namespace DeBox.Teleport
                 case TeleportMsgTypeIds.Disconnect:
                     clientData = GetClientData(sender);
                     CleanupClientData(clientData);
-                    OnClientDisconnect(DisconnectReasonType.ClientInitiatedDisconnect);
+                    OnClientDisconnect(clientData.clientId, DisconnectReasonType.ClientInitiatedDisconnect);
                     break;
                 case TeleportMsgTypeIds.TimeSync:
                     ReplyToTimeSyncRequest(sender, reader);
