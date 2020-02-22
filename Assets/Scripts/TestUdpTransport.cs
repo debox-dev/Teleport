@@ -33,8 +33,8 @@ namespace DeBox.Teleport.Tests
    
             if (Time.time > _nextSendTime)
             {
-                _serverTransport.ProcessIncoming((r) => Debug.Log("server got data"));
-                _clientTransport.ProcessIncoming((r) => Debug.Log("client got data"));
+                _serverTransport.ProcessIncoming((e, r) => Debug.Log("server got data from " + e));
+                _clientTransport.ProcessIncoming((e, r) => Debug.Log("client got data from " + e));
 
                 _nextSendTime = Time.time + 0.1f;
                 if (!didClientSend)

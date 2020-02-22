@@ -15,7 +15,7 @@ namespace DeBox.Teleport.Transport
 
 
         public void ReceiveRawData(byte[] data, int dataLength)
-        {
+        {            
             Array.Copy(data, 0, _buffer, _bufferLength, dataLength);
             _bufferLength += dataLength;
         }
@@ -39,8 +39,9 @@ namespace DeBox.Teleport.Transport
             {
                 throw new Exception("invalid message header!!!");
             }
-            if (_bufferLength < headerLength + dataLength)
+            if (_bufferLength < (headerLength + dataLength))
             {
+                Debug.LogError("Not enough data");
                 return 0; //not enough data
             }
             // copy the data to outBuffer

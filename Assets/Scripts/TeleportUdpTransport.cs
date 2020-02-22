@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.IO;
 using UnityEngine;
 using DeBox.Teleport.Transport;
-using DeBox.Teleport.Debugging;
-
 
 namespace DeBox.Teleport
 {
-
-
     public class TeleportUdpTransport
     {
         private enum TransportType
@@ -58,22 +53,28 @@ namespace DeBox.Teleport
             }
         }
 
-        public void ProcessIncoming(Action<TeleportReader> deserializer)
+
+
+        public void ProcessIncoming(Action<EndPoint, TeleportReader> deserializer)
         {
+            
             foreach (var endpoint in _endpointCollection.GetEndpoints())
-            {
+            {                
                 var endpointChannels = _endpointCollection.GetChannelsOfEndpoint(endpoint);
+                
                 for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
-                {
+                {                    
                     var channel = _endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
+                    
                     while (channel.IncomingMessageCount > 0)
-                    {
+                    {                        
                         var next = channel.GetNextIncomingData();
                         using (var stream = new MemoryStream(next))
                         {
                             using (var reader = new TeleportReader(stream))
                             {
-                                deserializer(reader);
+
+                                deserializer(endpoint, reader);
                             }                                
                         }                            
                     }
@@ -87,6 +88,15 @@ namespace DeBox.Teleport
             {
                 var channel = _endpointCollection.GetChannelOfEndpoint(ep, channelId);
                 channel.Send(data);
+            }
+        }
+
+        public void Send(byte[] data, byte channelId = 0, params EndPoint[] endpoints)
+        {
+            foreach (var endpoint in endpoints)
+            {
+                var channel = _endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
+                channel.Send(channel.PrepareToSend(data));
             }
         }
 
@@ -159,13 +169,13 @@ namespace DeBox.Teleport
 
         private void ReceiveIncomingData(byte channelId, byte[] data, int receivedDataLength, EndPoint endpoint, EndpointCollection endpointCollection)
         {
+            Debug.LogError(_transportType + ": got data: " + Debugging.TeleportDebugUtils.DebugString(data, 0, receivedDataLength));
             var endpointChannel = endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
             ReceiveIncomingChannelData(endpointChannel, data, 0, receivedDataLength, endpoint, endpointCollection);            
         }
 
         private void SendOutgoingDataAllChannelsOfAllEndpoints(Socket socket, EndpointCollection endpointCollection)
         {
-            byte[] header = new byte[1];
             byte[] data;
             BaseTeleportChannel channel;
             TeleportPacketBuffer packetBuffer;
@@ -185,24 +195,6 @@ namespace DeBox.Teleport
                     }
                 }
             }
-            
-        }
-
-        private byte Checksum(byte[] data, long startOffset, long amount, params byte[] additional)
-        {
-            byte checksumCalculated = 0;
-            unchecked
-            {
-                for (long i = startOffset; i < amount; i++)
-                {
-                    checksumCalculated += data[i];
-                }
-                for (long i = 0; i < additional.Length; i++)
-                {
-                    checksumCalculated += additional[i];
-                }
-            }
-            return (byte)(checksumCalculated % 4);
         }
 
         private void InternalClient(object clientParamsObj)
