@@ -9,11 +9,14 @@ namespace DeBox.Teleport
 {
     public abstract class BaseTeleportProcessor
     {
+        private const float RECEIVE_INCOMING_MESSAGES_RATE_IN_SECONDS = 0.1f;
+
         public float LocalTime => Time.fixedTime;
 
         protected readonly TeleportUdpTransport _transport;
         private Dictionary<byte, Action<EndPoint, TeleportReader>> _incomingMessageProcessors;
         private TeleportUnityHelper _unityHelper;
+        private float _nextHandleIncomingTime;
 
         public BaseTeleportProcessor(TeleportUdpTransport transport)
         {
@@ -28,6 +31,7 @@ namespace DeBox.Teleport
             go.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
             _unityHelper = go.AddComponent<TeleportUnityHelper>();
             _unityHelper.Initialize(UnityUpdate);
+            _nextHandleIncomingTime = 0;
         }
 
         protected void StopUnityHelper()
@@ -40,7 +44,11 @@ namespace DeBox.Teleport
 
         protected virtual void UnityUpdate()
         {
-            HandleIncoming();
+            if (LocalTime > _nextHandleIncomingTime)
+            {
+                _nextHandleIncomingTime = LocalTime + RECEIVE_INCOMING_MESSAGES_RATE_IN_SECONDS;
+                HandleIncoming();
+            }            
         }
 
         protected void Send<T>(T message, byte channelId = 0) where T : ITeleportMessage

@@ -8,7 +8,7 @@ namespace DeBox.Teleport.Core
 
         private ArrayQueue<byte[]> _sendQueue;
 
-        public SimpleTeleportChannel(int maxReceiveBuffer = 1000, int maxSendBuffer = 1000)
+        public SimpleTeleportChannel(int maxReceiveBuffer = 5000, int maxSendBuffer = 5000)
         {
             _receiveQueue = new ArrayQueue<byte[]>(maxReceiveBuffer);
             _sendQueue = new ArrayQueue<byte[]>(maxSendBuffer);

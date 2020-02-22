@@ -75,8 +75,8 @@ namespace DeBox.Teleport.Tests
         {
             didClientSend = false;
             var port = 5000;
-            //_serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
-            //_clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            //_serverTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
+            //_clientTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
             _serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
             _clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
             //_serverTransport = new TeleportUdpTransport(() => new AggregatingTeleportChannel(new SimpleTeleportChannel()));

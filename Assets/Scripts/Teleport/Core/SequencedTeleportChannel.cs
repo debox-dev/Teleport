@@ -48,8 +48,7 @@ namespace DeBox.Teleport.Core
         }
 
         public override void Receive(byte[] data, int startIndex, int length)
-        {
-            //UnityEngine.Debug.LogError("Receive: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(data, startIndex, length));
+        {            
             var processedLength = 0;
             ushort sequenceNumber;
             
@@ -141,7 +140,7 @@ namespace DeBox.Teleport.Core
                 {
                     seqId = p.Key;
                     outboxItem = p.Value;
-                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 10000000000)                    
+                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 10000000)                    
                     {
                         outboxItem.lastSendTime = DateTime.UtcNow.Ticks;
                         InternalChannel.Send(outboxItem.data);
