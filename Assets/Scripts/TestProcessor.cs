@@ -12,10 +12,16 @@ namespace DeBox.Teleport.Tests
         {
             public override byte MsgTypeId => TeleportMsgTypeIds.Highest + 10;
 
-            public override void Deserialize(TeleportReader reader)
+            public override void OnArrivalToClient()
             {
-                Debug.Log("Deserialize");
-                base.Deserialize(reader);
+                base.OnArrivalToClient();
+                Debug.Log("Arrived to client");
+            }
+
+            public override void OnArrivalToServer(uint clientId)
+            {
+                base.OnArrivalToServer(clientId);
+                Debug.Log("Arrived to server");
             }
         }
 
@@ -30,7 +36,7 @@ namespace DeBox.Teleport.Tests
         private TeleportClientProcessor _client;
 
         // Update is called once per frame
-        void Update()
+        void FixedUpdate()
         {
             if (_start)
             {
@@ -44,21 +50,21 @@ namespace DeBox.Teleport.Tests
             }
 
 
-            if (Time.time > _nextSendTime)
+            if (Time.fixedTime > _nextSendTime)
             {
-                _server.HandleIncoming();
-                _client.HandleIncoming();
+              //  _server.HandleIncoming();
+               // _client.HandleIncoming();
 
-                _nextSendTime = Time.time + 0.1f;                
+                _nextSendTime = Time.time + 0.001f;                
                 for (int i = 0; i < 20; i++)
                 {
-                    _server.Send(new TestMessage());
+                    _server.SendToAll(new TestMessage());
 
                 }
 
                 for (int i = 0; i < 20; i++)
                 {
-                    _client.Send(new TestMessage());
+                    _client.SendToServer(new TestMessage());
 
                 }
             }

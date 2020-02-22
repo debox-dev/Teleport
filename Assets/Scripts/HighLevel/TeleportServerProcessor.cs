@@ -28,7 +28,6 @@ namespace DeBox.Teleport.HighLevel
         private Dictionary<EndPoint, TeleportClientData> _clientDataByEndpoint;
         private Dictionary<uint, TeleportClientData> _clientDataById;
 
-
         public TeleportServerProcessor(TeleportUdpTransport transport) : base(transport)
         {
             _nextClientId = 0;
@@ -38,12 +37,83 @@ namespace DeBox.Teleport.HighLevel
 
         public void Listen(int port)
         {
+            StartUnityHelper("Server");
             _transport.StartListener(port);
         }
 
         public void StopListening()
         {
+            StopUnityHelper();
             _transport.StopListener();
+        }
+
+        public void SendToAll<T>(T message, byte channelId = 0) where T : ITeleportMessage
+        {
+            message.PreSendServer();
+            Send(message, channelId);
+            message.PostSendServer();
+        }
+
+        public void SendToClient<T>(uint clientId, T message, byte channelId = 0) where T : ITeleportMessage
+        {
+            message.PreSendServer();
+            SendToClients(message, channelId, clientId);
+            message.PostSendServer();
+        }
+
+        public void SendToClients<T>(T message, params uint[] clientIds) where T : ITeleportMessage
+        {
+            message.PreSendServer();
+            SendToClients(message, 0, clientIds);
+            message.PostSendServer();
+        }
+
+        public void SendToClients<T>(T message, byte channelId = 0, params uint[] clientIds) where T : ITeleportMessage
+        {
+            message.PreSendServer();
+            SendToEndpoints(message.SerializeWithId, channelId, GetEndpointsOfClients(clientIds));
+            message.PostSendServer();
+        }
+
+        public void SendToAllExcept<T>(uint clientId, T message, byte channelId = 0, params uint[] excludedClientIds) where T : ITeleportMessage
+        {
+            message.PreSendServer();
+            var endpointsToSend = GetAllEndpointsExceptExcluded(excludedClientIds);
+            var clientData = GetClientData(clientId);
+            SendToEndpoints(message.SerializeWithId, channelId, endpointsToSend.ToArray());
+            message.PostSendServer();
+        }
+
+        private EndPoint[] GetEndpointsOfClients(params uint[] clientIds)
+        {
+            EndPoint[] endpoints = new EndPoint[clientIds.Length];
+            for (int i = 0; i < clientIds.Length; i++)
+            {
+                endpoints[i] = GetClientData(clientIds[i]).endpoint;
+            }
+            return endpoints;
+        }
+
+        private List<EndPoint> GetAllEndpointsExceptExcluded(params uint[] excludedClientIds)
+        {
+            List<EndPoint> endpointsToSend = new List<EndPoint>();
+            foreach (var pair in _clientDataById)
+            {
+                bool exclude = false;
+                for (int i = 0; i < excludedClientIds.Length; i++)
+                {
+                    if (pair.Key == excludedClientIds[i])
+                    {
+                        exclude = true;
+                        break;
+                    }
+                }
+                if (!exclude)
+                {
+                    endpointsToSend.Add(pair.Value.endpoint);
+                }
+            }
+            return endpointsToSend;
         }
 
         public void DisconnectClient(uint clientId)
@@ -77,7 +147,7 @@ namespace DeBox.Teleport.HighLevel
 
         private void SendDisconnectToClient(byte channelId, EndPoint endpoint, DisconnectReasonType reason)
         {
-            Send((w) => { w.Write(TeleportMsgTypeIds.Disconnect); w.Write((byte)reason); }, channelId: 0, endpoint);
+            SendToEndpoints((w) => { w.Write(TeleportMsgTypeIds.Disconnect); w.Write((byte)reason); }, channelId: 0, endpoint);
         }
 
         protected sealed override void OnMessageArrival(EndPoint endpoint, ITeleportMessage message)
@@ -89,6 +159,7 @@ namespace DeBox.Teleport.HighLevel
                 return;
             }
             OnMessageArrival(clientData.clientId, endpoint, message);
+            message.OnArrivalToServer(clientData.clientId);
         }
 
         protected virtual void OnClientDisconnect(DisconnectReasonType reason) { }
@@ -104,7 +175,6 @@ namespace DeBox.Teleport.HighLevel
             uint clientId;
             if (isFirstAuth)
             {
-                UnityEngine.Debug.Log("Server got handshake from " + sender);
                 authKey = 13; // TODO: Randomize
                 clientId = _nextClientId;
                 _nextClientId++;
@@ -117,7 +187,6 @@ namespace DeBox.Teleport.HighLevel
                 };
                 _clientDataByEndpoint[sender] = clientData;
                 _clientDataById[clientId] = clientData;
-                UnityEngine.Debug.Log("Server sends handshake ack to client " + sender);
                 Send((w) =>
                 {
                     w.Write(TeleportMsgTypeIds.Handshake);

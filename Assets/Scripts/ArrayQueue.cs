@@ -25,6 +25,8 @@ namespace DeBox.Collections
 
         public int Count => _enqueueIndex >= _dequeueIndex ? _enqueueIndex - _dequeueIndex : _queue.Length - (_dequeueIndex - _enqueueIndex - 1);        
 
+        public T Peek() { return _queue[_dequeueIndex]; }
+
         public void Enqueue(T item)
         {
             lock (_queueLock)

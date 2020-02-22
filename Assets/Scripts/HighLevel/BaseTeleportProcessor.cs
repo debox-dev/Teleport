@@ -1,8 +1,8 @@
-﻿﻿using System;
+﻿using DeBox.Teleport.Transport;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Collections.Generic;
-using DeBox.Teleport.Transport;
 
 namespace DeBox.Teleport.HighLevel
 {
@@ -10,14 +10,37 @@ namespace DeBox.Teleport.HighLevel
     {
         protected readonly TeleportUdpTransport _transport;
         private Dictionary<byte, Action<EndPoint, TeleportReader>> _incomingMessageProcessors;
+        private TeleportUnityHelper _unityHelper;
 
         public BaseTeleportProcessor(TeleportUdpTransport transport)
         {
             _transport = transport;
             _incomingMessageProcessors = new Dictionary<byte, Action<EndPoint, TeleportReader>>();
+            _unityHelper = null;
         }
 
-        public virtual void Send<T>(T message, byte channelId = 0) where T : BaseTeleportMessage
+        protected void StartUnityHelper(string name)
+        {
+            var go = new UnityEngine.GameObject(name);
+            go.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+            _unityHelper = go.AddComponent<TeleportUnityHelper>();
+            _unityHelper.Initialize(UnityUpdate);
+        }
+
+        protected void StopUnityHelper()
+        {
+            if (_unityHelper != null)
+            {
+                _unityHelper.Deinitialize();
+            } 
+        }
+
+        protected virtual void UnityUpdate()
+        {
+            HandleIncoming();
+        }
+
+        protected void Send<T>(T message, byte channelId = 0) where T : ITeleportMessage
         {
             Send(message.SerializeWithId);
         }
@@ -54,7 +77,7 @@ namespace DeBox.Teleport.HighLevel
 
         protected abstract void HandleIncomingMessage(EndPoint sender, TeleportReader reader);
 
-        protected void Send(Action<TeleportWriter> serializer, byte channelId = 0, params EndPoint[] endpoints)
+        protected void SendToEndpoints(Action<TeleportWriter> serializer, byte channelId = 0, params EndPoint[] endpoints)
         {
             using (var stream = new MemoryStream())
             {

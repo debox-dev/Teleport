@@ -15,19 +15,35 @@ namespace DeBox.Teleport.HighLevel
         private byte _authKey;
         private uint _clientId;
         private bool _isAuthenticated;
+        private TimedMessageQueue _timedMessageQueue;
 
         public TeleportClientProcessor(TeleportUdpTransport transport) : base(transport)
-        { }
+        {
+            _timedMessageQueue = new TimedMessageQueue();
+        }
 
         public void Connect(string host, int port)
         {
-            _transport.StartClient(host, port);
+            StartUnityHelper("Client");
+            //_transport.StartClient(host, port);
+        }
+
+        protected override void UnityUpdate()
+        {
+            base.UnityUpdate();
+            PlayTimedMessages(0);
         }
 
         public void Disconnect()
         {
+            StopUnityHelper();
             Send((w) => { w.Write(TeleportMsgTypeIds.Disconnect); });
             Disconnect(DisconnectReasonType.ClientSideDisconnectRequested);
+        }
+
+        public void PlayTimedMessages(float untilTimestamp)
+        {
+            _timedMessageQueue.ProcessUntil(untilTimestamp);
         }
 
         protected void Disconnect(DisconnectReasonType reason)
@@ -36,14 +52,15 @@ namespace DeBox.Teleport.HighLevel
             OnDisconnect(reason);
         }
 
-        public override void Send<T>(T message, byte channelId = 0)
-        {
-
+        public void SendToServer<T>(T message, byte channelId = 0) where T : ITeleportMessage
+        {            
             if (!_isAuthenticated)
             {
                 SendHandshake();
             }
-            base.Send(message, channelId);
+            message.PreSendClient();
+            Send(message, channelId);
+            message.PostSendClient();
         }
 
         protected virtual void OnConnectionEstablisehd(uint clientId) { }
@@ -57,6 +74,12 @@ namespace DeBox.Teleport.HighLevel
                 return;
             }
             OnMessageArrival(message);
+            message.OnArrivalToClient();
+            var timedMessage = message as TimedTeleportMessage;
+            if (timedMessage != null)
+            {
+                _timedMessageQueue.AcceptMessage(timedMessage);
+            }
         }
 
         protected virtual void OnMessageArrival(ITeleportMessage message)
@@ -66,7 +89,6 @@ namespace DeBox.Teleport.HighLevel
 
         private void ProcessHandshake(TeleportReader reader)
         {
-            UnityEngine.Debug.Log("Client got handshake ack");
             _authKey = reader.ReadByte();
             _clientId = reader.ReadUInt32();
             _isAuthenticated = true;

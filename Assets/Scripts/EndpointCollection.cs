@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 namespace DeBox.Teleport.Transport
 {    
-
     public class EndpointCollection
     {
         public readonly double SecondsTimeout;
@@ -94,7 +93,7 @@ namespace DeBox.Teleport.Transport
                 foreach (var ep in endpointsToRemove)
                 {
                     _endpointPings.Remove(ep);
-                    // TODO: Deinit channel
+                    // TODO: Deinit channel??
                     _endpointChannels.Remove(ep);
                     _endpointPacketBuffers.Remove(ep);
                 }

@@ -26,9 +26,11 @@ namespace DeBox.Teleport.HighLevel
 
         }
 
-        public virtual void OnArrival()
-        {
-        }
-
+        public virtual void PreSendClient() { }
+        public virtual void PreSendServer() { }
+        public virtual void OnArrivalToServer(uint clientId) { }
+        public virtual void OnArrivalToClient() { }
+        public virtual void PostSendClient() { }
+        public virtual void PostSendServer() { }
     }
 }
