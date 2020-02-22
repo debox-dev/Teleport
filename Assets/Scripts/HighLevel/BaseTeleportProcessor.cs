@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Net;
 using System.Collections.Generic;
@@ -60,8 +60,8 @@ namespace DeBox.Teleport.HighLevel
                 using (var writer = new TeleportWriter(stream))
                 {
                     serializer(writer);
-                    _transport.Send(stream.ToArray(), channelId, endpoints);
                 }
+                transport.Send(stream.ToArray(), channelId, endpoints);
             }
         }
 
