@@ -42,8 +42,10 @@ namespace DeBox.Teleport.HighLevel
         {
             var message = new T();
             message.Deserialize(reader);
-            message.OnArrival();
+            OnMessageArrival(endpoint, message);
         }
+
+        protected virtual void OnMessageArrival(EndPoint endpoint, ITeleportMessage message) {}
 
         private void InternalHandleIncomingMessage(EndPoint sender, TeleportReader reader)
         {
@@ -81,10 +83,8 @@ namespace DeBox.Teleport.HighLevel
             Action<EndPoint, TeleportReader> processor;
             if (!_incomingMessageProcessors.TryGetValue(msgTypeId, out processor))
             {
-                throw new Exception("Unknown msg type id: " + msgTypeId);
+                throw new Exception("Unknown msg type id, don't know how to process: " + msgTypeId);
             }
-
-            
             processor(endpoint, reader);
         }
     }

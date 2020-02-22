@@ -5,6 +5,13 @@ namespace DeBox.Teleport.HighLevel
 {
     public class TeleportClientProcessor : BaseTeleportProcessor
     {
+        public enum DisconnectReasonType
+        {
+            ClientSideDisconnectRequested,
+            ServerTimeout,
+            ServerRequestedDisconnect,
+        }
+
         private byte _authKey;
         private uint _clientId;
         private bool _isAuthenticated;
@@ -19,7 +26,14 @@ namespace DeBox.Teleport.HighLevel
 
         public void Disconnect()
         {
+            Send((w) => { w.Write(TeleportMsgTypeIds.Disconnect); });
+            Disconnect(DisconnectReasonType.ClientSideDisconnectRequested);
+        }
+
+        protected void Disconnect(DisconnectReasonType reason)
+        {
             _transport.StopClient();
+            OnDisconnect(reason);
         }
 
         public override void Send<T>(T message, byte channelId = 0)
@@ -32,12 +46,30 @@ namespace DeBox.Teleport.HighLevel
             base.Send(message, channelId);
         }
 
+        protected virtual void OnConnectionEstablisehd(uint clientId) { }
+        protected virtual void OnDisconnect(DisconnectReasonType reason) {}
+
+        protected sealed override void OnMessageArrival(EndPoint endpoint, ITeleportMessage message)
+        {
+            if (!_isAuthenticated)
+            {
+                UnityEngine.Debug.LogWarning("Client got a message while not yet authenticated!");
+                return;
+            }
+            OnMessageArrival(message);
+        }
+
+        protected virtual void OnMessageArrival(ITeleportMessage message)
+        {
+
+        }
+
         private void ProcessHandshake(TeleportReader reader)
         {
             UnityEngine.Debug.Log("Client got handshake ack");
             _authKey = reader.ReadByte();
             _clientId = reader.ReadUInt32();
-            _isAuthenticated = true;           
+            _isAuthenticated = true;
         }
 
         private void SendHandshake()
@@ -68,6 +100,10 @@ namespace DeBox.Teleport.HighLevel
             {
                 case TeleportMsgTypeIds.Handshake:
                     ProcessHandshake(reader);
+                    OnConnectionEstablisehd(_clientId);
+                    break;
+                case TeleportMsgTypeIds.Disconnect:
+                    Disconnect(DisconnectReasonType.ServerRequestedDisconnect);
                     break;
                 default:
                     ProcessMessage(sender, msgTypeId, reader);
