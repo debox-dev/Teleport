@@ -22,8 +22,9 @@ namespace DeBox.Teleport.HighLevel
             _transport.StopClient();
         }
 
-        public override void Send(BaseTeleportMessage message, byte channelId = 0)
+        public override void Send<T>(T message, byte channelId = 0)
         {
+
             if (!_isAuthenticated)
             {
                 SendHandshake();

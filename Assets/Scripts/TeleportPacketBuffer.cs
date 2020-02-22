@@ -15,7 +15,7 @@ namespace DeBox.Teleport.Transport
 
 
         public void ReceiveRawData(byte[] data, int dataLength)
-        {            
+        {
             Array.Copy(data, 0, _buffer, _bufferLength, dataLength);
             _bufferLength += dataLength;
         }
@@ -29,15 +29,20 @@ namespace DeBox.Teleport.Transport
             byte[] packetData = new byte[length + HEADER_LENGTH];
             byte headerLength = CreateHeader(packetData, channelId, data, offset, length);
             Array.Copy(data, offset, packetData, HEADER_LENGTH, length);
+            
             return packetData;
         }
 
         public int TryParseNextIncomingPacket(byte[] outBuffer, out byte channelId)
-        {
+        {            
             byte crc, dataLength, headerLength;
             if (!ParseHeader(_buffer, 0, out crc, out channelId, out dataLength, out headerLength))
             {
                 throw new Exception("invalid message header!!!");
+            }
+            if (_bufferLength == 0)
+            {
+                return 0;
             }
             if (_bufferLength < (headerLength + dataLength))
             {

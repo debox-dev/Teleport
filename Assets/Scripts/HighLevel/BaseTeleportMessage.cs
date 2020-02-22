@@ -10,6 +10,12 @@ namespace DeBox.Teleport.HighLevel
 
         public abstract byte MsgTypeId { get; }
 
+        public virtual void SerializeWithId(TeleportWriter writer)
+        {
+            writer.Write(MsgTypeId);
+            Serialize(writer);
+        }
+
         public virtual void Deserialize(TeleportReader reader)
         {
 

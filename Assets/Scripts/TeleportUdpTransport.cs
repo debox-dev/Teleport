@@ -83,11 +83,11 @@ namespace DeBox.Teleport
         }
 
         public void Send(byte[] data, byte channelId = 0)
-        {
+        {            
             foreach (var ep in _endpointCollection.GetEndpoints())
             {
                 var channel = _endpointCollection.GetChannelOfEndpoint(ep, channelId);
-                channel.Send(data);
+                channel.Send(channel.PrepareToSend(data));
             }
         }
 
@@ -169,7 +169,6 @@ namespace DeBox.Teleport
 
         private void ReceiveIncomingData(byte channelId, byte[] data, int receivedDataLength, EndPoint endpoint, EndpointCollection endpointCollection)
         {
-            Debug.LogError(_transportType + ": got data: " + Debugging.TeleportDebugUtils.DebugString(data, 0, receivedDataLength));
             var endpointChannel = endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
             ReceiveIncomingChannelData(endpointChannel, data, 0, receivedDataLength, endpoint, endpointCollection);            
         }

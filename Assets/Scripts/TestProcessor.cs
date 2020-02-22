@@ -14,8 +14,8 @@ namespace DeBox.Teleport.Tests
 
             public override void Deserialize(TeleportReader reader)
             {
+                Debug.Log("Deserialize");
                 base.Deserialize(reader);
-                Debug.Log("Deserialize!");
             }
         }
 
@@ -76,8 +76,8 @@ namespace DeBox.Teleport.Tests
         {
             didClientSend = false;
             var port = 5000;
-            var serverTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
-            var clientTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());          
+            var serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            var clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));          
             _server = new TeleportServerProcessor(serverTransport);
             _client = new TeleportClientProcessor(clientTransport);
             _server.RegisterMessage<TestMessage>();

@@ -17,9 +17,9 @@ namespace DeBox.Teleport.HighLevel
             _incomingMessageProcessors = new Dictionary<byte, Action<EndPoint, TeleportReader>>();
         }
 
-        public virtual void Send(BaseTeleportMessage message, byte channelId = 0)
+        public virtual void Send<T>(T message, byte channelId = 0) where T : BaseTeleportMessage
         {
-            Send(message.Serialize);
+            Send(message.SerializeWithId);
         }
 
         public void HandleIncoming()
@@ -47,7 +47,6 @@ namespace DeBox.Teleport.HighLevel
 
         private void InternalHandleIncomingMessage(EndPoint sender, TeleportReader reader)
         {
-            UnityEngine.Debug.Log(GetType().ToString() + ": Got: " + Debugging.TeleportDebugUtils.DebugString(((MemoryStream)(reader.BaseStream)).ToArray()));
             HandleIncomingMessage(sender, reader);
         }
 
@@ -61,7 +60,7 @@ namespace DeBox.Teleport.HighLevel
                 {
                     serializer(writer);
                 }
-                transport.Send(stream.ToArray(), channelId, endpoints);
+                _transport.Send(stream.ToArray(), channelId, endpoints);
             }
         }
 
@@ -71,10 +70,9 @@ namespace DeBox.Teleport.HighLevel
             {
                 using (var writer = new TeleportWriter(stream))
                 {
-                    serializer(writer);
-                    UnityEngine.Debug.Log(GetType().ToString() + ": Sending: " + Debugging.TeleportDebugUtils.DebugString(stream.ToArray()));
-                    _transport.Send(stream.ToArray(), channelId);
+                    serializer(writer);                   
                 }
+                _transport.Send(stream.ToArray(), channelId);
             }
         }
 
