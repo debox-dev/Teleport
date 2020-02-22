@@ -25,13 +25,13 @@ namespace DeBox.Teleport.HighLevel
         public void Connect(string host, int port)
         {
             StartUnityHelper("Client");
-            //_transport.StartClient(host, port);
+            _transport.StartClient(host, port);
         }
 
         protected override void UnityUpdate()
         {
             base.UnityUpdate();
-            PlayTimedMessages(0);
+            //PlayTimedMessages(0);
         }
 
         public void Disconnect()
