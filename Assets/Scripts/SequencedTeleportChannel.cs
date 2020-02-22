@@ -32,7 +32,7 @@ namespace DeBox.Teleport.Transport
 
         public SequencedTeleportChannel() : this(new SimpleTeleportChannel()) { }
 
-        public SequencedTeleportChannel(BaseTeleportChannel internalChannel) : this(internalChannel, false)
+        public SequencedTeleportChannel(BaseTeleportChannel internalChannel) : this(internalChannel, true)
         {            
         }
 
@@ -81,11 +81,10 @@ namespace DeBox.Teleport.Transport
                 byte[] ackData = new byte[] { 0xff, 0xff, 0, 0 };
                 Array.Copy(BitConverter.GetBytes(sequenceNumber), 0, ackData, 2, 2);
                 Send(ackData);
-                //_pendingAcksQueue.Enqueue(sequenceNumber);           
+                _pendingAcksQueue.Enqueue(sequenceNumber);           
                 ProcessOutbox();
             }            
             ProcessInbox();
-            
         }
 
         public override void Upkeep()
@@ -100,8 +99,7 @@ namespace DeBox.Teleport.Transport
                 sequenceNumber = _pendingAcksQueue.Dequeue();
                 byte[] ackData = new byte[] { 0xff, 0xff, 0, 0 };
                 Array.Copy(BitConverter.GetBytes(sequenceNumber), 0, ackData, 2, 2);
-                Send(PrepareToSend(ackData));
-
+                Send(ackData);
             }
         }
 

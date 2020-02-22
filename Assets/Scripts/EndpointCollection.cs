@@ -12,6 +12,7 @@ namespace DeBox.Teleport.Transport
         private readonly DateTime _epocDateTime;
         private readonly Dictionary<EndPoint, double> _endpointPings;
         private readonly Dictionary<EndPoint, BaseTeleportChannel[]> _endpointChannels;
+        private readonly Dictionary<EndPoint, TeleportPacketBuffer> _endpointPacketBuffers;
         private readonly Func<BaseTeleportChannel>[] _channelCreators;
         private readonly object _lock;
 
@@ -20,6 +21,7 @@ namespace DeBox.Teleport.Transport
             SecondsTimeout = secondsTimeout;
             _endpointPings = new Dictionary<EndPoint, double>();
             _endpointChannels = new Dictionary<EndPoint, BaseTeleportChannel[]>();
+            _endpointPacketBuffers = new Dictionary<EndPoint, TeleportPacketBuffer>();
             _epocDateTime = new DateTime(1970, 1, 1);
             _channelCreators = channelCreators;
             _lock = new object();
@@ -32,6 +34,7 @@ namespace DeBox.Teleport.Transport
                 if (!_endpointPings.ContainsKey(endpoint))
                 { 
                     _endpointChannels[endpoint] = CreateChannels();
+                    _endpointPacketBuffers[endpoint] = new TeleportPacketBuffer();
                 }
                 _endpointPings[endpoint] = GetEpoc();
             }
@@ -46,6 +49,11 @@ namespace DeBox.Teleport.Transport
                 channels[i] = _channelCreators[i]();
             }
             return channels;
+        }
+
+        public TeleportPacketBuffer GetBufferOfEndpoint(EndPoint endpoint)
+        {
+            return _endpointPacketBuffers[endpoint];
         }
 
         public BaseTeleportChannel[] GetChannelsOfEndpoint(EndPoint endpoint)
@@ -88,6 +96,7 @@ namespace DeBox.Teleport.Transport
                     _endpointPings.Remove(ep);
                     // TODO: Deinit channel
                     _endpointChannels.Remove(ep);
+                    _endpointPacketBuffers.Remove(ep);
                 }
             }
 

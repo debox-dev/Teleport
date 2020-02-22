@@ -105,6 +105,10 @@ namespace DeBox.Teleport
 
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
             EndPoint endpoint = (EndPoint)(sender);
+            TeleportPacketBuffer packetBuffer;
+            byte[] packetData = new byte[256];
+            int packetLength;
+            byte channelId;
             int receivedDataLength;
             _stopRequested = false;
             while (!_stopRequested)
@@ -115,8 +119,21 @@ namespace DeBox.Teleport
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.ReceiveFrom(data, ref endpoint);
-                    ReceiveIncomingData(data, receivedDataLength, endpoint, _endpointCollection);
+                    _endpointCollection.Ping(endpoint);
+                    packetBuffer = _endpointCollection.GetBufferOfEndpoint(endpoint);
+                    packetBuffer.ReceiveRawData(data, receivedDataLength);
+                    do
+                    {
+                        packetLength = packetBuffer.TryParseNextIncomingPacket(packetData, out channelId);
+                        if (packetLength > 0)
+                        {
+                            ReceiveIncomingData(channelId, packetData, packetLength, endpoint, _endpointCollection);
+                        }   
+                    }
+                    while (packetLength > 0);
+                    
                 }
+                
 
                 Upkeep();
             }
@@ -140,37 +157,21 @@ namespace DeBox.Teleport
         }
 
 
-        private void ReceiveIncomingData(byte[] data, int receivedDataLength, EndPoint endpoint, EndpointCollection endpointCollection)
+        private void ReceiveIncomingData(byte channelId, byte[] data, int receivedDataLength, EndPoint endpoint, EndpointCollection endpointCollection)
         {
-            byte[] header = new byte[1];
-            endpointCollection.Ping(endpoint);
-
-      
-
-            header[0] = data[0];
-
-            var strippedData = new byte[receivedDataLength - header.Length];
-            Array.Copy(data, header.Length, strippedData, 0, strippedData.Length);
-            byte channelId = (byte)(header[0] & 0b11);
-            var checksumFromData = (header[0] >> 2) & 0b11;
-            var calculatedChecksum = Checksum(data, header.Length, data.Length - header.Length);
-            if (checksumFromData != calculatedChecksum)
-            {
-                Debug.LogError(_transportType + " Checksum mismatch, got: " + checksumFromData + " expected: " + calculatedChecksum + " " + TeleportDebugUtils.DebugString(data));
-                return;
-            }
             var endpointChannel = endpointCollection.GetChannelOfEndpoint(endpoint, channelId);
-            ReceiveIncomingChannelData(endpointChannel, strippedData, 0, strippedData.Length, endpoint, endpointCollection);            
+            ReceiveIncomingChannelData(endpointChannel, data, 0, receivedDataLength, endpoint, endpointCollection);            
         }
 
         private void SendOutgoingDataAllChannelsOfAllEndpoints(Socket socket, EndpointCollection endpointCollection)
         {
             byte[] header = new byte[1];
             byte[] data;
-            byte[] internalData;
             BaseTeleportChannel channel;
+            TeleportPacketBuffer packetBuffer;
             foreach (var endpoint in endpointCollection.GetEndpoints())
             {
+                packetBuffer = _endpointCollection.GetBufferOfEndpoint(endpoint);
                 var endpointChannels = endpointCollection.GetChannelsOfEndpoint(endpoint);
                 for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
                 {
@@ -178,12 +179,8 @@ namespace DeBox.Teleport
                     channel = endpointChannels[channelId];
                     while (channel.OutgoingMessageCount > 0)
                     {
-                        internalData = channel.GetNextOutgoingData();
-                        header[0] = channelId;
-                        header[0] += (byte)(Checksum(internalData, 0, internalData.Length, channelId) << 2);
-                        data = new byte[internalData.Length + header.Length];
-                        data[0] = header[0];
-                        Array.Copy(internalData, 0, data, header.Length, internalData.Length);
+                        data = channel.GetNextOutgoingData();
+                        data = packetBuffer.CreatePacket(channelId, data, 0, (byte)data.Length);
                         socket.SendTo(data, data.Length, SocketFlags.None, endpoint);
                     }
                 }
@@ -217,6 +214,10 @@ namespace DeBox.Teleport
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             var endpoint = new IPEndPoint(IPAddress.Parse(clientParams.host), clientParams.port);
             byte[] data;
+            byte[] packetData = new byte[256];
+            int packetLength;
+            TeleportPacketBuffer packetBuffer;
+            byte channelId;
             _transportType = TransportType.Client;
             socket.Connect(endpoint);
             _endpointCollection.Ping(endpoint);
@@ -231,7 +232,18 @@ namespace DeBox.Teleport
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.Receive(data);
-                    ReceiveIncomingData(data, receivedDataLength, endpoint, _endpointCollection);
+                    _endpointCollection.Ping(endpoint);
+                    packetBuffer = _endpointCollection.GetBufferOfEndpoint(endpoint);
+                    packetBuffer.ReceiveRawData(data, receivedDataLength);
+                    do
+                    {
+                        packetLength = packetBuffer.TryParseNextIncomingPacket(packetData, out channelId);
+                        if (packetLength > 0)
+                        {
+                            ReceiveIncomingData(channelId, packetData, packetLength, endpoint, _endpointCollection);
+                        }
+                    }
+                    while (packetLength > 0);
                 }
 
                 Upkeep();
