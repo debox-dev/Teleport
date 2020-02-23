@@ -103,7 +103,7 @@ namespace DeBox.Teleport.Tests
             _server.RegisterMessage<TimedMessageTest>();
             _client.RegisterMessage<TimedMessageTest>();
             _server.Listen(port);
-            _client.Connect("127.0.0.1", port);
+            _client.Connect("localhost", port);
             _nextSendTime = Time.time + 1;
             _isOn = true;
             yield return new WaitForSeconds(50);

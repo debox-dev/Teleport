@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.IO;
 using UnityEngine;
+using DeBox.Teleport.Utils;
 
 namespace DeBox.Teleport.Core
 {
@@ -18,7 +19,7 @@ namespace DeBox.Teleport.Core
 
         private struct ClientParams
         {
-            public string host;
+            public IPAddress address;
             public int port;
         }
 
@@ -217,7 +218,7 @@ namespace DeBox.Teleport.Core
             var clientParams = (ClientParams)clientParamsObj;
             var udpClient = new UdpClient();
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            var endpoint = new IPEndPoint(IPAddress.Parse(clientParams.host), clientParams.port);
+            var endpoint = new IPEndPoint(clientParams.address, clientParams.port);
             byte[] data;
             byte[] packetData = new byte[256];
             int packetLength;
@@ -262,10 +263,16 @@ namespace DeBox.Teleport.Core
             {
                 throw new Exception("Thread already active");
             }
+            IPAddress address;
+            if (!DnsIpUtils.TryGetIp(host, out address))
+            {
+                return;
+            }    
             Debug.Log("Starting client");
             _stopRequested = false;
             _thread = new Thread(InternalClient);
-            _thread.Start(new ClientParams() { host = host, port = port });
+            
+            _thread.Start(new ClientParams() { address = address, port = port });
         }
 
         public void StopClient()
