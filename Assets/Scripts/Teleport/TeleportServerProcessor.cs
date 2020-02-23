@@ -72,10 +72,7 @@ namespace DeBox.Teleport
 
         public void SendToClients<T>(T message, params uint[] clientIds) where T : ITeleportMessage
         {
-            StampMessageIfTimed(message);
-            message.PreSendServer();
             SendToClients(message, 0, clientIds);
-            message.PostSendServer();
         }
 
         public void SendToClients<T>(T message, byte channelId = 0, params uint[] clientIds) where T : ITeleportMessage
