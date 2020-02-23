@@ -3,7 +3,7 @@ using DeBox.Teleport.Core;
 
 namespace DeBox.Teleport
 {
-    public abstract class TimedTeleportMessage : BaseTeleportMessage
+    public abstract class TimedTeleportMessage : BaseTeleportMessage, ITeleportTimedMessage
     {
         public float Timestamp { get; private set; }
 

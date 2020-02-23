@@ -108,7 +108,7 @@ namespace DeBox.Teleport
 
         private void StampMessageIfTimed<T>(T message) where T : ITeleportMessage
         {
-            var timedMessage = message as TimedTeleportMessage;
+            var timedMessage = message as ITeleportTimedMessage;
             if (timedMessage != null)
             {
                 timedMessage.SetTimestamp(LocalTime);

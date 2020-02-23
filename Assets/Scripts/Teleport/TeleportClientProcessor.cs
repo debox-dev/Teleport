@@ -131,7 +131,7 @@ namespace DeBox.Teleport
             }
             OnMessageArrival(message);
             message.OnArrivalToClient();
-            var timedMessage = message as TimedTeleportMessage;
+            var timedMessage = message as ITeleportTimedMessage;
             if (timedMessage != null)
             {
                 _timedMessageQueue.AcceptMessage(timedMessage);

@@ -183,24 +183,31 @@ namespace DeBox.Teleport.Core
                 var endpointChannels = endpointCollection.GetChannelsOfEndpoint(endpoint);
                 for (byte channelId = 0; channelId < endpointChannels.Length; channelId++)
                 {
-                    
                     channel = endpointChannels[channelId];
                     while (channel.OutgoingMessageCount > 0)
                     {
                         data = channel.GetNextOutgoingData();
                         data = packetBuffer.CreatePacket(channelId, data, 0, (byte)data.Length);
-                        if (_transportType == TransportType.Client)
-                        {
-                            socket.Send(data, data.Length, SocketFlags.None);
-                        }
-                        else
-                        {
-                            socket.SendTo(data, data.Length, SocketFlags.None, endpoint);
-                        }
-   
+                        ClientSocketSend(socket, data, data.Length, SocketFlags.None, endpoint);
                     }
                 }
             }
+        }
+
+        private void ClientSocketSend(Socket socket, byte[] data, int dataLength, SocketFlags socketFlags, EndPoint endpoint)
+        {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            if (_transportType == TransportType.Client)
+            {
+                socket.Send(data, data.Length, socketFlags);
+            }
+            else
+            {
+                socket.SendTo(data, data.Length, socketFlags, endpoint);
+            }
+#else
+            socket.SendTo(data, data.Length, socketFlags, endpoint);
+#endif
         }
 
         private void InternalClient(object clientParamsObj)

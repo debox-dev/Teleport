@@ -67,8 +67,8 @@ namespace DeBox.Teleport.Tests
 
         private void OnDestroy()
         {
-            _clientTransport.StopClient();
-            _serverTransport.StopListener();
+            //_clientTransport.StopClient();
+            //_serverTransport.StopListener();
         }
 
         private IEnumerator TestCoro()

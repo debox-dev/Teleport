@@ -93,7 +93,7 @@ namespace DeBox.Teleport.Tests
         private IEnumerator TestCoro()
         {
             didClientSend = false;
-            var port = 5000;
+            var port = 6000;
             var serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
             var clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));          
             _server = new TeleportServerProcessor(serverTransport);
