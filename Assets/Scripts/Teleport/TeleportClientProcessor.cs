@@ -53,15 +53,23 @@ namespace DeBox.Teleport
             StartUnityHelper("Client");
             State = StateType.Connecting;
             _transport.StartClient(host, port);
+            
         }
 
         protected override void UnityUpdate()
         {
             base.UnityUpdate();
-            if (_isAuthenticated && LocalTime > _nextTimeSyncTime)
+            if (LocalTime > _nextTimeSyncTime)
             {
                 _nextTimeSyncTime = LocalTime + TIME_SYNC_MESSAGE_RATE_IN_SECONDS;
-                SendTimesyncRequest();
+                if (_isAuthenticated)
+                {
+                    SendTimesyncRequest();
+                }
+                else
+                {
+                    SendHandshake();
+                }
             }
             if (ServerTime > 0)
             {

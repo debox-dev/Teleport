@@ -189,7 +189,15 @@ namespace DeBox.Teleport.Core
                     {
                         data = channel.GetNextOutgoingData();
                         data = packetBuffer.CreatePacket(channelId, data, 0, (byte)data.Length);
-                        socket.SendTo(data, data.Length, SocketFlags.None, endpoint);
+                        if (_transportType == TransportType.Client)
+                        {
+                            socket.Send(data, data.Length, SocketFlags.None);
+                        }
+                        else
+                        {
+                            socket.SendTo(data, data.Length, SocketFlags.None, endpoint);
+                        }
+   
                     }
                 }
             }
