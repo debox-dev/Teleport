@@ -34,6 +34,7 @@ namespace DeBox.Teleport
         private TimedMessageQueue _timedMessageQueue;
         private float _nextTimeSyncTime;
         private float _timedMessagePlaybackDelay;
+        private float _handshakeTime;
 
         public StateType State { get; private set; }
         public float ServerTime { get; private set; }
@@ -53,23 +54,21 @@ namespace DeBox.Teleport
             StartUnityHelper("Client");
             State = StateType.Connecting;
             _transport.StartClient(host, port);
-            
+            _handshakeTime = LocalTime + 0.5f;
         }
 
         protected override void UnityUpdate()
         {
-            base.UnityUpdate();
-            if (LocalTime > _nextTimeSyncTime)
+            base.UnityUpdate();       
+            if (!_isAuthenticated && _handshakeTime < LocalTime)
+            {
+                SendHandshake();
+                _handshakeTime = LocalTime + 5;
+            }
+            if (_isAuthenticated && LocalTime > _nextTimeSyncTime)
             {
                 _nextTimeSyncTime = LocalTime + TIME_SYNC_MESSAGE_RATE_IN_SECONDS;
-                if (_isAuthenticated)
-                {
-                    SendTimesyncRequest();
-                }
-                else
-                {
-                    SendHandshake();
-                }
+                SendTimesyncRequest();
             }
             if (ServerTime > 0)
             {
