@@ -26,8 +26,9 @@ namespace DeBox.Teleport
         public event Action<uint, EndPoint> ClientConnected;
         public event Action<uint, DisconnectReasonType> ClientDisconnected;
         public event Action<uint, EndPoint, ITeleportMessage> MessageArrived;
+        public event Action ServerBecameOnline;
 
-        public bool IsListening { get; private set; }
+        public bool IsListening => _transport.ThreadStarted;
 
         private uint _nextClientId;
         private Dictionary<EndPoint, TeleportClientData> _clientDataByEndpoint;
@@ -44,12 +45,10 @@ namespace DeBox.Teleport
         {
             StartUnityHelper("Server");
             _transport.StartListener(port);
-            IsListening = true;
         }
 
         public void StopListening()
         {
-            IsListening = false;
             StopUnityHelper();
             _transport.StopListener();
         }
@@ -174,6 +173,12 @@ namespace DeBox.Teleport
             }
             OnMessageArrival(clientData.clientId, endpoint, message);
             message.OnArrivalToServer(clientData.clientId);
+        }
+
+        protected override void OnSocketThreadStarted()
+        {
+            base.OnSocketThreadStarted();
+            ServerBecameOnline?.Invoke();
         }
 
         protected virtual void OnClientDisconnect(uint clientId, DisconnectReasonType reason)

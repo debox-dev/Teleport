@@ -17,9 +17,13 @@ namespace DeBox.Teleport
         private Dictionary<byte, Action<EndPoint, TeleportReader>> _incomingMessageProcessors;
         private TeleportUnityHelper _unityHelper;
         private float _nextHandleIncomingTime;
+        private bool _socketStarted;
+
+        public bool IsOnline => _transport.ThreadStarted;
 
         public BaseTeleportProcessor(TeleportUdpTransport transport)
         {
+            _socketStarted = false;
             _transport = transport;
             _incomingMessageProcessors = new Dictionary<byte, Action<EndPoint, TeleportReader>>();
             _unityHelper = null;
@@ -44,6 +48,14 @@ namespace DeBox.Teleport
 
         protected virtual void UnityUpdate()
         {
+            if (_socketStarted != _transport.ThreadStarted)
+            {
+                if (_transport.ThreadStarted)
+                {
+                    OnSocketThreadStarted();
+                }
+                _socketStarted = _transport.ThreadStarted;
+            }
             if (LocalTime > _nextHandleIncomingTime)
             {
                 _nextHandleIncomingTime = LocalTime + RECEIVE_INCOMING_MESSAGES_RATE_IN_SECONDS;
@@ -91,6 +103,8 @@ namespace DeBox.Teleport
             message.Deserialize(reader);
             OnMessageArrival(endpoint, message);
         }
+
+        protected virtual void OnSocketThreadStarted() { }
 
         protected virtual void OnMessageArrival(EndPoint endpoint, ITeleportMessage message) {}
 

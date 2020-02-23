@@ -30,6 +30,8 @@ namespace DeBox.Teleport.Core
         private readonly double _endpointTimeout = 30;
         private EndpointCollection _endpointCollection = null;
 
+        public bool ThreadStarted { get; private set; } = false;
+
         public TeleportUdpTransport(params Func<BaseTeleportChannel>[] channelCreators)
         {
             _channelCreators = channelCreators;
@@ -121,6 +123,7 @@ namespace DeBox.Teleport.Core
             byte channelId;
             int receivedDataLength;
             _stopRequested = false;
+            ThreadStarted = true;
             while (!_stopRequested)
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
@@ -230,6 +233,7 @@ namespace DeBox.Teleport.Core
 
             int receivedDataLength;
             _stopRequested = false;
+            ThreadStarted = true;
             while (!_stopRequested)
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
@@ -263,6 +267,7 @@ namespace DeBox.Teleport.Core
             {
                 throw new Exception("Thread already active");
             }
+            ThreadStarted = false;
             IPAddress address;
             if (!DnsIpUtils.TryGetIp(host, out address))
             {
@@ -278,8 +283,9 @@ namespace DeBox.Teleport.Core
         public void StopClient()
         {
             Debug.Log("Stopping client");
-            _stopRequested = true;
-            _thread.Join();
+            ThreadStarted = false;
+            _stopRequested = true;            
+            _thread.Join();            
             _thread = null;
             Debug.Log("Stopped client");
         }
@@ -291,6 +297,7 @@ namespace DeBox.Teleport.Core
                 throw new Exception("Thread already active");
             }
             Debug.Log("Starting server");
+            ThreadStarted = false;
             _stopRequested = false;
             _thread = new Thread(new ParameterizedThreadStart(InternalListen));
             _thread.Start(port);
@@ -299,6 +306,7 @@ namespace DeBox.Teleport.Core
         public void StopListener()
         {
             Debug.Log("Stopping server");
+            ThreadStarted = false;
             _stopRequested = true;
             _thread.Join();
             _thread = null;

@@ -44,7 +44,7 @@ namespace DeBox.Teleport
         {
             State = StateType.Disconnected;
             _timedMessageQueue = new TimedMessageQueue();
-            _timedMessagePlaybackDelay = timedMessagePlaybackDelay;
+            _timedMessagePlaybackDelay = timedMessagePlaybackDelay;            
         }
 
         public void Connect(string host, int port)

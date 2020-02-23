@@ -53,6 +53,7 @@ namespace DeBox.Teleport.Unity
             _server.ClientConnected += ServerSideOnClientConnected;
             _server.ClientDisconnected += ServerSideOnClientDisconnected;
             _server.MessageArrived += ServerSideOnMessageArrived;
+            _server.ServerBecameOnline += ServerStarted;
             _server.Listen(port);
         }
 
@@ -60,6 +61,7 @@ namespace DeBox.Teleport.Unity
             _server.ClientConnected -= ServerSideOnClientConnected;
             _server.ClientDisconnected -= ServerSideOnClientDisconnected;
             _server.MessageArrived -= ServerSideOnMessageArrived;
+            _server.ServerBecameOnline -= ServerStarted;
             if (_server.IsListening)
             {
                 _server.StopListening();
@@ -115,6 +117,7 @@ namespace DeBox.Teleport.Unity
 
         protected abstract TeleportChannelType[] GetChannelTypes();
 
+        public abstract void ServerStarted();
         public abstract void ServerSideOnClientConnected(uint clientId, EndPoint endpoint);
         public abstract void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason);
         public abstract void ServerSideOnMessageArrived(uint clientId, EndPoint endpoint, ITeleportMessage message);
