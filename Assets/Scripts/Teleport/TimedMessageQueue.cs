@@ -16,6 +16,11 @@ namespace DeBox.Teleport
             _messageQueue.Enqueue(message);
         }
 
+        public void Clear()
+        {
+            _messageQueue.Clear();
+        }
+
         public void ProcessUntil(float timestamp)
         {
             ITeleportTimedMessage message;

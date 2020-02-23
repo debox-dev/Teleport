@@ -13,23 +13,25 @@ namespace DeBox.Teleport.Unity
             Unreliable
         }
 
-        [SerializeField]
-        private TeleportChannelType[] _channelTypes = new[] { TeleportChannelType.SequencedReliable };
-
         protected TeleportClientProcessor _client;
         protected TeleportServerProcessor _server;
+
+        public TeleportClientProcessor.StateType ClientState => _client == null ? TeleportClientProcessor.StateType.Disconnected : _client.State;
+        public bool IsServerListening => _server != null && _server.IsListening;
 
         private TeleportUdpTransport CreateTransport()
         {
             return new TeleportUdpTransport(GetChannelCreators());
         }
+
         private Func<BaseTeleportChannel>[] GetChannelCreators()
         {
-            var channelFuncs = new Func<BaseTeleportChannel>[_channelTypes.Length];
-            for (int i = 0; i < _channelTypes.Length; i++)
+            var channelTypes = GetChannelTypes();
+            var channelFuncs = new Func<BaseTeleportChannel>[channelTypes.Length];
+            for (int i = 0; i < channelTypes.Length; i++)
             {
                 Func<BaseTeleportChannel> channelFunc;
-                switch (_channelTypes[i])
+                switch (channelTypes[i])
                 {
                     case TeleportChannelType.Unreliable:
                         channelFunc = () => new SimpleTeleportChannel();
@@ -38,7 +40,7 @@ namespace DeBox.Teleport.Unity
                         channelFunc = () => new SequencedTeleportChannel(new SimpleTeleportChannel());
                         break;
                     default:
-                        throw new Exception("Don't know how to create channel type: " + _channelTypes[i]);
+                        throw new Exception("Don't know how to create channel type: " + channelTypes[i]);
                 }
                 channelFuncs[i] = channelFunc;
             }
@@ -85,6 +87,33 @@ namespace DeBox.Teleport.Unity
             }
             _client = null;    
         }
+
+        public void SendToAllClients(ITeleportMessage message, byte channelId = 0)
+        {
+            _server.SendToAll(message, channelId);
+        }
+
+        public void SendToClient(uint clientId, ITeleportMessage message, byte channelId = 0)
+        {
+            _server.SendToClient(clientId, message, channelId);
+        }
+
+        public void SendToClients(ITeleportMessage message, byte channelId = 0, params uint[] clientIds)
+        {
+            _server.SendToClients(message, channelId, clientIds);
+        }
+
+        public void SendToAllExcept(ITeleportMessage message, byte channelId = 0, params uint[] excludedClientIds)
+        {
+            _server.SendToAllExcept(message, channelId, excludedClientIds);
+        }
+
+        public void SendToServer(ITeleportMessage message, byte channelId = 0)
+        {
+            _client.SendToServer(message, channelId);
+        }
+
+        protected abstract TeleportChannelType[] GetChannelTypes();
 
         public abstract void ServerSideOnClientConnected(uint clientId, EndPoint endpoint);
         public abstract void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason);

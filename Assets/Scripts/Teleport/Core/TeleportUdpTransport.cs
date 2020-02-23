@@ -298,7 +298,7 @@ namespace DeBox.Teleport.Core
 
         public void StopListener()
         {
-            Debug.Log("Stopping");
+            Debug.Log("Stopping server");
             _stopRequested = true;
             _thread.Join();
             _thread = null;

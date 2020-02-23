@@ -26,6 +26,8 @@ namespace DeBox.Teleport.Core
 
         public T Peek() { return _queue[_dequeueIndex]; }
 
+        public void ClearFast() { _enqueueIndex = _dequeueIndex; }
+
         public void Enqueue(T item)
         {
             lock (_queueLock)

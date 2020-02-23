@@ -80,12 +80,11 @@ namespace DeBox.Teleport
             message.PostSendServer();
         }
 
-        public void SendToAllExcept<T>(uint clientId, T message, byte channelId = 0, params uint[] excludedClientIds) where T : ITeleportMessage
+        public void SendToAllExcept<T>(T message, byte channelId = 0, params uint[] excludedClientIds) where T : ITeleportMessage
         {
             StampMessageIfTimed(message);
             message.PreSendServer();
             var endpointsToSend = GetAllEndpointsExceptExcluded(excludedClientIds);
-            var clientData = GetClientData(clientId);
             SendToEndpoints(message.SerializeWithId, channelId, endpointsToSend.ToArray());
             message.PostSendServer();
         }

@@ -35,6 +35,7 @@ namespace DeBox.Teleport
         private float _nextTimeSyncTime;
         private float _timedMessagePlaybackDelay;
         private float _handshakeTime;
+        private bool _isTimeSynced;
 
         public StateType State { get; private set; }
         public float ServerTime { get; private set; }
@@ -42,15 +43,16 @@ namespace DeBox.Teleport
         public TeleportClientProcessor(TeleportUdpTransport transport, float timedMessagePlaybackDelay = 0.08f) : base(transport)
         {
             State = StateType.Disconnected;
-            _isAuthenticated = false;
             _timedMessageQueue = new TimedMessageQueue();
-            ServerTime = -1;
-            _nextTimeSyncTime = -1;
             _timedMessagePlaybackDelay = timedMessagePlaybackDelay;
         }
 
         public void Connect(string host, int port)
         {
+            _isAuthenticated = false;
+            _isTimeSynced = false;
+            ServerTime = -1;
+            _nextTimeSyncTime = -1;
             StartUnityHelper("Client");
             State = StateType.Connecting;
             _transport.StartClient(host, port);
@@ -91,6 +93,7 @@ namespace DeBox.Teleport
 
         protected void Disconnect(DisconnectReasonType reason)
         {
+            _timedMessageQueue.Clear();
             _transport.StopClient();
             State = StateType.Disconnected;
             OnDisconnect(reason);
@@ -102,9 +105,19 @@ namespace DeBox.Teleport
             {
                 SendHandshake();
             }
+            StampMessageIfTimed(message);
             message.PreSendClient();
             Send(message, channelId);
             message.PostSendClient();
+        }
+
+        private void StampMessageIfTimed<T>(T message) where T : ITeleportMessage
+        {
+            var timedMessage = message as ITeleportTimedMessage;
+            if (timedMessage != null)
+            {
+                timedMessage.SetTimestamp(ServerTime);
+            }
         }
 
         protected virtual void OnConnectionEstablisehd(uint clientId)
@@ -156,7 +169,6 @@ namespace DeBox.Teleport
             _authKey = reader.ReadByte();
             _clientId = reader.ReadUInt32();
             _isAuthenticated = true;
-            State = StateType.Connected;
         }
 
         private void SendHandshake()
@@ -212,6 +224,8 @@ namespace DeBox.Teleport
             var delta = estimatedServerTime - ServerTime;
             var absDelta = Math.Abs(delta);
             var deltaSign = Math.Sign(delta);
+            _isTimeSynced = true;
+            State = StateType.Connected;
             if (absDelta > TIME_SYNC_MAX_TIME_DRIFT_BEFORE_HARD_SET_IN_SECONDS)
             {
                 ServerTime = estimatedServerTime;
