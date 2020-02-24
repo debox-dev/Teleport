@@ -36,6 +36,8 @@ namespace DeBox.Teleport.Unity
             return _instanceIdByInstance.ContainsKey(instance);
         }
 
+        public ushort GetNextInstanceId() { return _instanceIdSequence++; }
+
         public GameObject CreateInstance()
         {
             if (_prefab == null)
@@ -72,9 +74,8 @@ namespace DeBox.Teleport.Unity
             _instanceByInstanceId.Remove(instanceId);
         }
 
-        public virtual void OnClientSpawn(TeleportReader reader, GameObject spawned)
+        public virtual void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned)
         {
-            var instanceId = reader.ReadUInt16();
             spawned.name = "ClientSpawn_" + spawned.name;
             _instanceIdByInstance[spawned] = instanceId;
             _instanceByInstanceId[instanceId] = spawned;
@@ -87,12 +88,21 @@ namespace DeBox.Teleport.Unity
             _instanceByInstanceId.Remove(instanceId);
         }
 
-        public virtual void OnServerSpawn(TeleportWriter writer, GameObject spawned, object instanceConfig)
+
+        public virtual void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned)
         {
-            var instanceId = _instanceIdSequence++;
-            writer.Write(instanceId);
             _instanceIdByInstance[spawned] = instanceId;
             _instanceByInstanceId[instanceId] = spawned;
+        }
+
+        public virtual void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object instanceConfig)
+        {
+
+        }
+
+        public virtual object GetConfigForLiveInstance(GameObject instance)
+        {
+            return null;
         }
 
         public GameObject GetInstanceById(ushort instanceId)
@@ -183,6 +193,11 @@ namespace DeBox.Teleport.Unity
             var states = GetCurrentStates();
             var message = new TeleportStateSyncMessage(SpawnId, states);
             TeleportManager.Main.SendToAllClients(message);
+        }
+
+        public ICollection<GameObject> GetInstances()
+        {
+            return _instanceByInstanceId.Values;
         }
     }
 

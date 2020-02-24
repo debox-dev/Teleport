@@ -19,8 +19,6 @@ namespace DeBox.Teleport.Unity
 
         public static TeleportManager Main { get; private set; }
 
-
-
         public void StartServer() { StartServer(_port); }
 
         public void ConnectClient() { ConnectClient(_clientHostname, _port); }
@@ -133,7 +131,27 @@ namespace DeBox.Teleport.Unity
             SendToAllClients(message, channelId);
         }
 
-		protected override TeleportChannelType[] GetChannelTypes() { return _channelTypes; }
+        private GameObject ServerSideSpawnRetroactiveForClient(uint clientId, GameObject instance, byte channelId = 0)
+        {
+            var spawner = GetServerSpawnerForInstance(instance);
+            var instanceConfig = spawner.GetConfigForLiveInstance(instance);
+            var message = new TeleportSpawnMessage(spawner, instance, instanceConfig);
+            SendToClient(clientId, message, channelId);
+            return message.SpawnedObject;
+        }
+
+        private void SpawnAllInstancesRetroactivelyForClient(uint clientId)
+        {
+            foreach (var serverSpawner in _ServerSpawners)
+            {
+                foreach (var instance in serverSpawner.GetInstances())
+                {
+                    ServerSideSpawnRetroactiveForClient(clientId, instance);
+                }
+            }
+        }
+
+        protected override TeleportChannelType[] GetChannelTypes() { return _channelTypes; }
 
         public override void ClientSideOnConnected(uint clientId) {}
 
@@ -141,7 +159,10 @@ namespace DeBox.Teleport.Unity
 
         public override void ClientSideOnMessageArrived(ITeleportMessage message) {}
 
-        public override void ServerSideOnClientConnected(uint clientId, EndPoint endpoint) {}
+        public override void ServerSideOnClientConnected(uint clientId, EndPoint endpoint)
+        {
+            SpawnAllInstancesRetroactivelyForClient(clientId);
+        }
 
         public override void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason) {}
 

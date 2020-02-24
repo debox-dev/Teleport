@@ -80,13 +80,22 @@ namespace DeBox.Teleport.Tests
             int spawnCount = 3;
             float duration = 10;
             _manager.StartServer();
-            _manager.ConnectClient();
-            _manager.RegisterClientMessage<TestMessage>();
+
             _manager.RegisterServerMessage<TestMessage>();
             var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
             spawner.AssignPrefab(_spawnedPrefab);
             _manager.RegisterSpawner(spawner);
 
+            while (spawnCount-- > 0)
+            {
+                var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
+                _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero, config));
+            }
+            yield return new WaitForSeconds(5);
+
+
+            _manager.ConnectClient();
+            _manager.RegisterClientMessage<TestMessage>();
             while (duration > 0)
             {
                 _manager.SendToAllClients(new TestMessage());
@@ -95,11 +104,7 @@ namespace DeBox.Teleport.Tests
                 if (_manager.ClientState == TeleportClientProcessor.StateType.Connected)
                 {
                     _manager.SendToServer(new TestMessage());
-                    while (spawnCount-- > 0)
-                    {
-                        var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
-                        _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero, config));
-                    }
+
                 }
                 duration -= Time.deltaTime;
             }

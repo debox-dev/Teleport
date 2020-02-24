@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 using DeBox.Teleport.Core;
 
 namespace DeBox.Teleport.Unity
@@ -71,14 +72,16 @@ namespace DeBox.Teleport.Unity
     {
         ushort SpawnId { get;  }
         bool ShouldSyncState { get; }
+        ushort GetNextInstanceId();
         bool IsManagedPrefab(GameObject prefab);
         bool IsManagedInstance(GameObject instance);
         void AssignSpawnId(ushort spawnId);
         GameObject CreateInstance();
         void DestroyInstance(GameObject instance);
-        void OnClientSpawn(TeleportReader reader, GameObject spawned);
+        void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned);
         void OnClientDespawn(TeleportReader reader, GameObject despawned);
-        void OnServerSpawn(TeleportWriter writer, GameObject spawned, object objectConfig);
+        void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned);
+        void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object objectConfig);
         void OnServerDespawn(TeleportWriter writer, GameObject despawned);
         GameObject GetInstanceById(ushort instanceId);
         ushort GetInstanceId(GameObject instance);
@@ -86,5 +89,7 @@ namespace DeBox.Teleport.Unity
         void ReceiveStates(float timestamp, ITeleportState[] instanceStates);
         ITeleportState[] GetCurrentStates();
         ITeleportState GenerateEmptyState();
+        object GetConfigForLiveInstance(GameObject instance);
+        ICollection<GameObject> GetInstances();
     }
 }

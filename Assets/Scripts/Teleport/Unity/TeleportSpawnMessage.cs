@@ -18,6 +18,8 @@ namespace DeBox.Teleport.Unity
         private ITeleportObjectSpawner _spawner;
         private TeleportReader _reader;
         private object _objectConfig;
+        private ushort _instanceId;
+    
 
         public TeleportSpawnMessage() {}
 
@@ -26,12 +28,22 @@ namespace DeBox.Teleport.Unity
             _objectConfig = objectConfig;
             _spawner = spawner;
             Position = position;
+            _instanceId = _spawner.GetNextInstanceId();
+        }
+
+        public TeleportSpawnMessage(ITeleportObjectSpawner spawner, GameObject existing, object objectConfig)
+        {
+            _objectConfig = objectConfig;
+            _spawner = spawner;
+            Position = existing.transform.position;
+            _instanceId = _spawner.GetInstanceId(existing);
+            SpawnedObject = existing;
         }
 
         public void OnTimedPlayback()
         {
             var instance = _spawner.CreateInstance();
-            _spawner.OnClientSpawn(_reader, instance);
+            _spawner.OnClientSpawn(_instanceId, _reader, instance);
             _reader.Close();
             SpawnedObject = instance;
             SpawnedObject.transform.position = Position;
@@ -41,6 +53,7 @@ namespace DeBox.Teleport.Unity
         {
             base.Deserialize(reader);
             SpawnId = reader.ReadUInt16();
+            _instanceId = reader.ReadUInt16();
             Position = reader.ReadVector3();
             _spawner = TeleportManager.Main.GetClientSpawner(SpawnId);
             // The reader will be closed by the time we use it, so we create a new reader
@@ -52,13 +65,22 @@ namespace DeBox.Teleport.Unity
 
         public override void Serialize(TeleportWriter writer)
         {
-            var instance = _spawner.CreateInstance();
-            instance.transform.position = Position;
+            bool didExist = true;
+            if (SpawnedObject == null)
+            {
+                didExist = false;
+                SpawnedObject = _spawner.CreateInstance();
+                SpawnedObject.transform.position = Position;
+            }
             base.Serialize(writer);
             writer.Write(_spawner.SpawnId);
+            writer.Write(_instanceId);
             writer.Write(Position);
-            _spawner.OnServerSpawn(writer, instance, _objectConfig);
-            SpawnedObject = instance;
+            if (!didExist)
+            {
+                _spawner.OnServerSpawn(_instanceId, writer, SpawnedObject);
+            }
+            _spawner.ServerSidePreSpawnToClient(writer, SpawnedObject, _objectConfig);
         }
 
         public void SetTimestamp(float timestamp)

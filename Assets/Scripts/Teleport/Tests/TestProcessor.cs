@@ -1,8 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
-using DeBox.Teleport;
 using DeBox.Teleport.Core;
-
 
 namespace DeBox.Teleport.Tests
 {
@@ -80,7 +78,6 @@ namespace DeBox.Teleport.Tests
 
                 }
             }
-
         }
         
 
