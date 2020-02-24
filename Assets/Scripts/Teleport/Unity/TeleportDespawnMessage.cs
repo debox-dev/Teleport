@@ -1,43 +1,41 @@
 ﻿using System;
 using System.IO;
 using DeBox.Teleport.Core;
-using UnityEngine;
 
 namespace DeBox.Teleport.Unity
 {
-    public class TeleportSpawnMessage : BaseTeleportMessage, ITeleportTimedMessage
+    public class TeleportDespawnMessage : BaseTeleportMessage, ITeleportTimedMessage
     {
         public float Timestamp { get; private set; }
         public ushort SpawnId { get; private set; }
 
-        public override byte MsgTypeId => TeleportMsgTypeIds.Spawn;
-
-        public GameObject SpawnedObject { get; private set; }
+        public override byte MsgTypeId => TeleportMsgTypeIds.Despawn;
 
         private ITeleportObjectSpawner _spawner;
         private TeleportReader _reader;
-        private object _objectConfig;
+        private ushort _instanceId;
 
-        public TeleportSpawnMessage() {}
+        public TeleportDespawnMessage() { }
 
-        public TeleportSpawnMessage(ITeleportObjectSpawner spawner, object objectConfig)
+        public TeleportDespawnMessage(ITeleportObjectSpawner spawner, ushort instanceId)
         {
-            _objectConfig = objectConfig;
             _spawner = spawner;
+            _instanceId = instanceId;
         }
 
         public void OnTimedPlayback()
         {
-            var instance = _spawner.CreateInstance();
-            _spawner.OnClientSpawn(_reader, instance);
+            var instance = _spawner.GetInstanceById(_instanceId);
+            _spawner.OnClientDespawn(_reader, instance);
             _reader.Close();
-            SpawnedObject = instance;
+            _spawner.DestroyInstance(instance);
         }
 
         public override void Deserialize(TeleportReader reader)
         {
             base.Deserialize(reader);
             SpawnId = reader.ReadUInt16();
+            _instanceId = reader.ReadUInt16();
             _spawner = TeleportManager.Main.GetClientSpawner(SpawnId);
             // The reader will be closed by the time we use it, so we create a new reader
             var rawData = ((MemoryStream)reader.BaseStream).ToArray();
@@ -48,11 +46,12 @@ namespace DeBox.Teleport.Unity
 
         public override void Serialize(TeleportWriter writer)
         {
-            var instance = _spawner.CreateInstance();
             base.Serialize(writer);
             writer.Write(_spawner.SpawnId);
-            _spawner.OnServerSpawn(writer, instance, _objectConfig);
-            SpawnedObject = instance;
+            writer.Write(_instanceId);
+            var despawned = _spawner.GetInstanceById(_instanceId);
+            _spawner.OnServerDespawn(writer, despawned);
+            _spawner.DestroyInstance(despawned);
         }
 
         public void SetTimestamp(float timestamp)

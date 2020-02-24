@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using DeBox.Teleport.Unity;
 
@@ -63,6 +64,8 @@ namespace DeBox.Teleport.Tests
         [SerializeField]
         private GameObject _spawnedPrefab = null;
 
+        private List<GameObject> _spawnedServerInstances = new List<GameObject>();
+
         private void Update()
         {
             if (_start)
@@ -75,7 +78,7 @@ namespace DeBox.Teleport.Tests
         private IEnumerator TestCoroutine()
         {
             int spawnCount = 3;
-            float duration = 20;
+            float duration = 10;
             _manager.StartServer();
             _manager.ConnectClient();
             _manager.RegisterClientMessage<TestMessage>();
@@ -95,12 +98,16 @@ namespace DeBox.Teleport.Tests
                     while (spawnCount-- > 0)
                     {
                         var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
-                        _manager.ServerSideSpawn(_spawnedPrefab, config);
+                        _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, config));
                     }
-                }                
+                }
                 duration -= Time.deltaTime;
             }
-            
+            foreach (var instance in _spawnedServerInstances)
+            {
+                _manager.ServerSideDespawn(instance);
+            }
+            yield return new WaitForSeconds(5);
             _manager.DisconnectClient();
             _manager.StopServer();
         }

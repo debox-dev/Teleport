@@ -11,7 +11,8 @@ namespace DeBox.Teleport.Unity
         [SerializeField] private TeleportChannelType[] _channelTypes = { TeleportChannelType.SequencedReliable };
         [SerializeField] private GameObject[] _prefabSpawners = new GameObject[0];
 
-        private List<ITeleportObjectSpawner> _spawners;
+        private List<ITeleportObjectSpawner> _clientSpawners;
+        private List<ITeleportObjectSpawner> _ServerSpawners;
 
         public static TeleportManager Main { get; private set; }
 
@@ -40,7 +41,8 @@ namespace DeBox.Teleport.Unity
 
         private void InitSpawners()
         {
-            _spawners = new List<ITeleportObjectSpawner>();
+            _clientSpawners = new List<ITeleportObjectSpawner>();
+            _ServerSpawners = new List<ITeleportObjectSpawner>();
             for (int i = 0; i < _prefabSpawners.Length; i++)
             {
                 var prefab = _prefabSpawners[i];
@@ -52,39 +54,75 @@ namespace DeBox.Teleport.Unity
                     basicSpawner.AssignPrefab(prefab);
                     spawner = basicSpawner;
                 }
-                spawner.AssignSpawnId((ushort)i);
-                _spawners.Add(spawner);
+                var clientSpawner = spawner.Duplicate();
+                var serverSpawner = spawner.Duplicate();
+                clientSpawner.AssignSpawnId((ushort)i);
+                serverSpawner.AssignSpawnId((ushort)i);
+                _clientSpawners.Add(clientSpawner);
+                _ServerSpawners.Add(serverSpawner);
             }
         }
 
         public void RegisterSpawner(ITeleportObjectSpawner spawner)
         {
-            var spawnerId = (ushort)_spawners.Count;
+            var spawnerId = (ushort)_clientSpawners.Count;
             spawner.AssignSpawnId(spawnerId);
-            _spawners.Add(spawner);
+            _clientSpawners.Add(spawner.Duplicate());
+            _ServerSpawners.Add(spawner.Duplicate());
         }
 
-        public ITeleportObjectSpawner GetSpawner(ushort spawnId)
+        public ITeleportObjectSpawner GetClientSpawner(ushort spawnId)
         {
-            return _spawners[spawnId];
+            return _clientSpawners[spawnId];
         }
 
-		public ITeleportObjectSpawner GetSpawnerForGameObject(GameObject prefab)
+		public ITeleportObjectSpawner GetServerSpawnerForPrefab(GameObject prefab)
 		{
-			for (int i = 0; i < _spawners.Count; i++)
+			for (int i = 0; i < _ServerSpawners.Count; i++)
 			{
-				if (_spawners[i].IsManagedPrefab(prefab))
+				if (_ServerSpawners[i].IsManagedPrefab(prefab))
 				{
-					return _spawners[i];
+					return _ServerSpawners[i];
 				}
 			}
 			throw new System.Exception("No TeleportObjectSpawner for prefab " + prefab.name);
 		}
 
-        public void ServerSideSpawn(GameObject prefab, object instanceConfig, byte channelId = 0)
+        public ITeleportObjectSpawner GetServerSpawnerForInstance(GameObject instance)
         {
-            var spawner = GetSpawnerForGameObject(prefab);
+            return GetSpawnerForInstance(instance, _ServerSpawners);
+        }
+
+        public ITeleportObjectSpawner GetServerClientForInstance(GameObject instance)
+        {
+            return GetSpawnerForInstance(instance, _clientSpawners);
+        }
+
+        public ITeleportObjectSpawner GetSpawnerForInstance(GameObject instance, List<ITeleportObjectSpawner> spawners)
+        {
+            for (int i = 0; i < spawners.Count; i++)
+            {
+                if (spawners[i].IsManagedInstance(instance))
+                {
+                    return spawners[i];
+                }
+            }
+            throw new System.Exception("No TeleportObjectSpawner for prefab " + instance.name);
+        }
+
+        public GameObject ServerSideSpawn(GameObject prefab, object instanceConfig, byte channelId = 0)
+        {
+            var spawner = GetServerSpawnerForPrefab(prefab);
             var message = new TeleportSpawnMessage(spawner, instanceConfig);
+            SendToAllClients(message, channelId);
+            return message.SpawnedObject;
+        }
+
+        public void ServerSideDespawn(GameObject instance, byte channelId = 0)
+        {
+            var spawner = GetServerSpawnerForInstance(instance);
+            var instanceId = spawner.GetInstanceId(instance);
+            var message = new TeleportDespawnMessage(spawner, instanceId);
             SendToAllClients(message, channelId);
         }
 
@@ -111,6 +149,7 @@ namespace DeBox.Teleport.Unity
         public override void ClientSidePreconnect()
         {
             RegisterClientMessage<TeleportSpawnMessage>();
+            RegisterClientMessage<TeleportDespawnMessage>();
         }
     }
 }
