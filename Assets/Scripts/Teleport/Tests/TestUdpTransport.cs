@@ -1,95 +1,111 @@
-﻿using System.Collections;
+﻿using System.Net;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using DeBox.Teleport.Core;
 
 namespace DeBox.Teleport.Tests
 {
-
     public class TestUdpTransport : MonoBehaviour
     {
-        [SerializeField]
-        private bool _start = false;
-        private bool _isOn;
-        private float _nextSendTime;
+        private int _clientDataSeq;
+        private int _serverDataSeq;
+        private List<int> _clientMissingSeqs;
+        private List<int> _serverMissingSeqs;
+ 
 
-        bool didClientSend = false;
-
-        private TeleportUdpTransport _serverTransport;
-        private TeleportUdpTransport _clientTransport;
-
-        // Update is called once per frame
-        void Update()
+        private IEnumerator Start()
         {
-            if (_start)
+            var port = 5006;
+            float testDuration = 30;
+            _clientDataSeq = 0;
+            _serverDataSeq = 0;
+            _clientMissingSeqs = new List<int>();
+            _serverMissingSeqs = new List<int>();
+            Debug.Log("Starting test in 3 seconds...");
+            yield return new WaitForSeconds(3);
+            var server = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            var client = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            server.StartListener(port);
+            client.StartClient("127.0.0.1", port);
+            Debug.Log("Waiting for client and server to start...");
+            while (!client.ThreadStarted || !server.ThreadStarted)
             {
-                _start = false;
-                StartCoroutine(TestCoro());
+                yield return null;
             }
-            if (!_isOn)
+            yield return new WaitForSeconds(3);
+            client.Send(new byte[] { 0, 0, 0, 0 }); // Say hello so server will recognize us
+            bool didServerGetHello = false;
+            while (!didServerGetHello)
             {
-                return;
+                server.ProcessIncoming((e, r) => { didServerGetHello = true; });
+                yield return null;
             }
-
-   
-            if (Time.time > _nextSendTime)
+            Debug.Log("Server got hello from client");
+            yield return new WaitForSeconds(1);
+            while (testDuration > 0)
             {
-                _serverTransport.ProcessIncoming((e, r) => Debug.Log("server got data from " + e));
-                _clientTransport.ProcessIncoming((e, r) => Debug.Log("client got data from " + e));
-
-                _nextSendTime = Time.time + 0.1f;
-                if (!didClientSend)
-                {
-                    _clientTransport.Send(Serialize);
-                    didClientSend = true;
-                }
-                for (int i = 0; i < 20; i ++)
-                {
-                    _serverTransport.Send(Serialize);
-
-                }
 
                 for (int i = 0; i < 20; i++)
                 {
-                    _clientTransport.Send(Serialize);
-
+                    client.Send(SerializeClient);
                 }
-                //_clientTransport.Send(Serialize);
-                //_clientTransport.Send(Serialize);
-                //_clientTransport.Send(Serialize);
+                for (int i = 0; i < 20; i++)
+                {
+                    server.Send(SerializeServer);
+                }
+                server.ProcessIncoming(DeserializeServer);
+                client.ProcessIncoming(DeserializeClient);
+                testDuration -= Time.deltaTime;
+                yield return null;
             }
-            
+            yield return new WaitForSeconds(10);
+
+            server.StopListener();
+            client.StopClient();
+
+            for (int i = 0; i < _serverMissingSeqs.Count; i++)
+            {
+                Debug.LogError("Missing sequence never got to server: " + i); 
+            }
+
+            for (int i = 0; i < _clientMissingSeqs.Count; i++)
+            { 
+                Debug.LogError("Missing sequence never got to client: " + i);
+            }
+
+            if (_clientMissingSeqs.Count == 0 && _serverMissingSeqs.Count == 0)
+            {
+                Debug.Log("All passed!");
+            }
         }
 
-        private void Serialize(TeleportWriter w)
+        private void SerializeClient(TeleportWriter w)
         {
-            w.Write("LALALAL");
+            var seq = _clientDataSeq++;
+            w.Write(seq);
+            _serverMissingSeqs.Add(seq);
         }
 
-        private void OnDestroy()
+        private void DeserializeClient(EndPoint e, TeleportReader r)
         {
-            //_clientTransport.StopClient();
-            //_serverTransport.StopListener();
+            var seq = r.ReadInt32();
+            Debug.Log("Client got data");
+            _clientMissingSeqs.Remove(seq);
         }
 
-        private IEnumerator TestCoro()
+        private void SerializeServer(TeleportWriter w)
         {
-            didClientSend = false;
-            var port = 5000;
-            //_serverTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
-            //_clientTransport = new TeleportUdpTransport(() => new SimpleTeleportChannel());
-            _serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
-            _clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
-            //_serverTransport = new TeleportUdpTransport(() => new AggregatingTeleportChannel(new SimpleTeleportChannel()));
-            //_clientTransport = new TeleportUdpTransport(() =>new AggregatingTeleportChannel(new SimpleTeleportChannel()));
-            _serverTransport.StartListener(port);
-            _clientTransport.StartClient("127.0.0.1", port);
-            _nextSendTime = Time.time + 1;
-            _isOn = true;
-            yield return new WaitForSeconds(50);
-            _isOn = false;
-            _serverTransport.StopListener();
-            _clientTransport.StopClient();
-            
+            var seq = _serverDataSeq++;
+            w.Write(seq);
+            _clientMissingSeqs.Add(seq);
+        }
+
+        private void DeserializeServer(EndPoint e, TeleportReader r)
+        {
+            Debug.Log("Server got data");
+            var seq = r.ReadInt32();
+            _serverMissingSeqs.Remove(seq);
         }
     }
 

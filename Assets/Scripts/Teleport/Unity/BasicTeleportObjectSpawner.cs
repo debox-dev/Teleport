@@ -126,8 +126,14 @@ namespace DeBox.Teleport.Unity
         public ITeleportObjectSpawner Duplicate(TeleportObjectSpawnerType spawnerType)
         {
             var instance = Instantiate(this);
+            instance.hideFlags = HideFlags.HideAndDontSave;
             instance._spawnerType = spawnerType;
             return instance;
+        }
+
+        public void DestroySelf()
+        {
+            Destroy(gameObject);
         }
 
         public void ReceiveStates(float timestamp, ITeleportState[] instanceStates)

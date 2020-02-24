@@ -8,7 +8,7 @@ namespace DeBox.Teleport.Core
 
         private ArrayQueue<byte[]> _sendQueue;
 
-        public SimpleTeleportChannel(int maxReceiveBuffer = 5000, int maxSendBuffer = 5000)
+        public SimpleTeleportChannel(int maxReceiveBuffer = 8096, int maxSendBuffer = 8096)
         {
             _receiveQueue = new ArrayQueue<byte[]>(maxReceiveBuffer);
             _sendQueue = new ArrayQueue<byte[]>(maxSendBuffer);
@@ -20,7 +20,6 @@ namespace DeBox.Teleport.Core
 
         public override void Receive(byte[] data, int startIndex, int length)
         {
-            //UnityEngine.Debug.LogError("Receive: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(data, startIndex, length));
             var strippedData = new byte[length];
             Array.Copy(data, startIndex, strippedData, 0, length);
             _receiveQueue.Enqueue(strippedData);
@@ -43,7 +42,6 @@ namespace DeBox.Teleport.Core
 
         public override byte[] PrepareToSend(byte[] data)
         {
-            //UnityEngine.Debug.LogError("Prepare: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(data));
             return data;
         }
     }

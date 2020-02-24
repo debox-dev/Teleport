@@ -15,7 +15,7 @@ namespace DeBox.Teleport.Unity
         public float PlaybackDelay => _playbackDelay;
 
         private List<ITeleportObjectSpawner> _clientSpawners;
-        private List<ITeleportObjectSpawner> _ServerSpawners;
+        private List<ITeleportObjectSpawner> _serverSpawners;
 
         public static TeleportManager Main { get; private set; }
 
@@ -38,6 +38,16 @@ namespace DeBox.Teleport.Unity
 
         protected virtual void OnDestroy()
         {
+            foreach (var spawner in _clientSpawners)
+            {
+                spawner.DestroySelf();
+            }
+            foreach (var spawner in _serverSpawners)
+            {
+                spawner.DestroySelf();
+            }
+            _clientSpawners.Clear();
+            _serverSpawners.Clear();
             if (Main == this)
             {
                 Main = null;
@@ -47,7 +57,7 @@ namespace DeBox.Teleport.Unity
         private void InitSpawners()
         {
             _clientSpawners = new List<ITeleportObjectSpawner>();
-            _ServerSpawners = new List<ITeleportObjectSpawner>();
+            _serverSpawners = new List<ITeleportObjectSpawner>();
             for (int i = 0; i < _prefabSpawners.Length; i++)
             {
                 var prefab = _prefabSpawners[i];
@@ -64,7 +74,7 @@ namespace DeBox.Teleport.Unity
                 clientSpawner.AssignSpawnId((ushort)i);
                 serverSpawner.AssignSpawnId((ushort)i);
                 _clientSpawners.Add(clientSpawner);
-                _ServerSpawners.Add(serverSpawner);
+                _serverSpawners.Add(serverSpawner);
             }
         }
 
@@ -73,7 +83,7 @@ namespace DeBox.Teleport.Unity
             var spawnerId = (ushort)_clientSpawners.Count;
             spawner.AssignSpawnId(spawnerId);
             _clientSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ClientSide));
-            _ServerSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ServerSide));
+            _serverSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ServerSide));
         }
 
         public ITeleportObjectSpawner GetClientSpawner(ushort spawnId)
@@ -83,11 +93,11 @@ namespace DeBox.Teleport.Unity
 
 		public ITeleportObjectSpawner GetServerSpawnerForPrefab(GameObject prefab)
 		{
-			for (int i = 0; i < _ServerSpawners.Count; i++)
+			for (int i = 0; i < _serverSpawners.Count; i++)
 			{
-				if (_ServerSpawners[i].IsManagedPrefab(prefab))
+				if (_serverSpawners[i].IsManagedPrefab(prefab))
 				{
-					return _ServerSpawners[i];
+					return _serverSpawners[i];
 				}
 			}
 			throw new System.Exception("No TeleportObjectSpawner for prefab " + prefab.name);
@@ -95,7 +105,7 @@ namespace DeBox.Teleport.Unity
 
         public ITeleportObjectSpawner GetServerSpawnerForInstance(GameObject instance)
         {
-            return GetSpawnerForInstance(instance, _ServerSpawners);
+            return GetSpawnerForInstance(instance, _serverSpawners);
         }
 
         public ITeleportObjectSpawner GetServerClientForInstance(GameObject instance)
@@ -142,7 +152,7 @@ namespace DeBox.Teleport.Unity
 
         private void SpawnAllInstancesRetroactivelyForClient(uint clientId)
         {
-            foreach (var serverSpawner in _ServerSpawners)
+            foreach (var serverSpawner in _serverSpawners)
             {
                 foreach (var instance in serverSpawner.GetInstances())
                 {

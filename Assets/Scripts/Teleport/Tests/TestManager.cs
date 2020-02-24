@@ -82,9 +82,9 @@ namespace DeBox.Teleport.Tests
             _manager.StartServer();
 
             _manager.RegisterServerMessage<TestMessage>();
-            var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
-            spawner.AssignPrefab(_spawnedPrefab);
-            _manager.RegisterSpawner(spawner);
+            //var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
+            //spawner.AssignPrefab(_spawnedPrefab);
+           // _manager.RegisterSpawner(spawner);
 
             while (spawnCount-- > 0)
             {

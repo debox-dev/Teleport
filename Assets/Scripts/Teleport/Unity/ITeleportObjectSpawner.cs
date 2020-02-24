@@ -78,6 +78,7 @@ namespace DeBox.Teleport.Unity
         void AssignSpawnId(ushort spawnId);
         GameObject CreateInstance();
         void DestroyInstance(GameObject instance);
+        void DestroySelf();
         void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned);
         void OnClientDespawn(TeleportReader reader, GameObject despawned);
         void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned);
