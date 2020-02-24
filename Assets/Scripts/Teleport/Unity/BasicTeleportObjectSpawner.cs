@@ -67,21 +67,29 @@ namespace DeBox.Teleport.Unity
             _prefab = prefab;
         }
 
-        public virtual void OnClientDespawn(TeleportReader reader, GameObject despawned)
+        public void OnClientDespawn(TeleportReader reader, GameObject despawned)
         {
             var instanceId = _instanceIdByInstance[despawned];
             _instanceIdByInstance.Remove(despawned);
             _instanceByInstanceId.Remove(instanceId);
         }
 
-        public virtual void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned)
+
+        public void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned)
         {
             spawned.name = "ClientSpawn_" + spawned.name;
             _instanceIdByInstance[spawned] = instanceId;
             _instanceByInstanceId[instanceId] = spawned;
+            PostClientSpawn(reader, spawned);
         }
 
-        public virtual void OnServerDespawn(TeleportWriter reader, GameObject despawned)
+        protected virtual void PostClientSpawn(TeleportReader reader, GameObject spawned)
+        {
+
+        }
+
+
+        public void OnServerDespawn(TeleportWriter reader, GameObject despawned)
         {
             var instanceId = _instanceIdByInstance[despawned];
             _instanceIdByInstance.Remove(despawned);
@@ -89,7 +97,7 @@ namespace DeBox.Teleport.Unity
         }
 
 
-        public virtual void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned)
+        public void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned)
         {
             _instanceIdByInstance[spawned] = instanceId;
             _instanceByInstanceId[instanceId] = spawned;

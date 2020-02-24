@@ -22,9 +22,9 @@ namespace DeBox.Teleport.Tests
             ApplyColor(config.Color, spawned);
         }
 
-        public override void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned)
+        protected override void PostClientSpawn(TeleportReader reader, GameObject spawned)
         {
-            base.OnClientSpawn(instanceId, reader, spawned);
+            base.PostClientSpawn(reader, spawned);
             var color = reader.ReadColor();
             ApplyColor(color, spawned);
         }
