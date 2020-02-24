@@ -73,29 +73,33 @@ namespace DeBox.Teleport.Tests
             int spawnCount = _spawnedObjectCount;
             float duration = 10;
             _manager.StartServer();
-            _manager.ConnectClient();
-            _manager.RegisterClientMessage<TestMessage>();
+
             _manager.RegisterServerMessage<TestMessage>();
             var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
             spawner.AssignPrefab(_spawnedPrefab);
             _manager.RegisterSpawner(spawner);
-
-            Debug.Log("Waiting for client to connect..");
-            while (!_manager.IsServerListening || _manager.ClientState != TeleportClientProcessor.StateType.Connected)
+            Debug.Log("Waiting for server to start...");
+            while (!_manager.IsServerListening)
             {
                 yield return null;
             }
-            Debug.Log("Client connected!");
-
+            Debug.Log("Server started, spawning objects...");
             while (spawnCount-- > 0)
             {
                 var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
                 _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero, config));
             }
-            yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(2);
+            Debug.Log("Waiting for client to connect..");
+            _manager.ConnectClient();
+            _manager.RegisterClientMessage<TestMessage>();
+            while (!_manager.IsServerListening || _manager.ClientState != TeleportClientProcessor.StateType.Connected)
+            {
+                yield return null;
+            }
+            Debug.Log("Client connected!");
+     
 
-
-        
             while (duration > 0)
             {
                 //_manager.SendToAllClients(new TestMessage());
