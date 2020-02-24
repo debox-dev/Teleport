@@ -29,18 +29,21 @@ namespace DeBox.Teleport.Unity
         {
             base.Serialize(writer);
             writer.Write(_spawnId);
+            //UnityEngine.Debug.Log("Sending " + (ushort)_states.Length + " states!");
             writer.Write((ushort)_states.Length);
             for (int i = 0; i < _states.Length; i++)
             {
                 _states[i].Serialize(writer);
-            }
+            }            
         }
 
         public override void Deserialize(TeleportReader reader)
-        {
+        {            
             base.Deserialize(reader);
             _spawnId = reader.ReadUInt16();
             var stateAmount = reader.ReadUInt16();
+            //UnityEngine.Debug.Log("Got " + stateAmount + " states!");
+            
             var spawner = TeleportManager.Main.GetClientSpawner(_spawnId);
             _states = new ITeleportState[stateAmount];
             ITeleportState currentState;

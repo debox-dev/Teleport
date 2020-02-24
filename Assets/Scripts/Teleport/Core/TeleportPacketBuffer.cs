@@ -22,16 +22,15 @@ namespace DeBox.Teleport.Core
             
         }
 
-        public byte[] CreatePacket(byte channelId, byte[] data, int offset = 0, byte length = 0)
-        {
+        public byte[] CreatePacket(byte channelId, byte[] data, int offset = 0, ushort length = 0)
+        {            
             if (length == 0)
             {
                 length = (byte)(data.Length - offset);
             }
             byte[] packetData = new byte[length + HEADER_LENGTH];
             byte headerLength = CreateHeader(packetData, channelId, data, offset, length);
-            Array.Copy(data, offset, packetData, HEADER_LENGTH, length);
-            
+            Array.Copy(data, offset, packetData, HEADER_LENGTH, length);            
             return packetData;
         }
 

@@ -61,20 +61,31 @@ namespace DeBox.Teleport.Tests
         [SerializeField]
         private GameObject _spawnedPrefab = null;
 
+        [SerializeField]
+        private int _spawnedObjectCount = 10;
+
         private List<GameObject> _spawnedServerInstances = new List<GameObject>();
 
         private IEnumerator Start()
         {
             Debug.Log("Test will start in 3 seconds...");
             yield return new WaitForSeconds(3);
-            int spawnCount = 40;
+            int spawnCount = _spawnedObjectCount;
             float duration = 10;
             _manager.StartServer();
-
+            _manager.ConnectClient();
+            _manager.RegisterClientMessage<TestMessage>();
             _manager.RegisterServerMessage<TestMessage>();
             var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
             spawner.AssignPrefab(_spawnedPrefab);
             _manager.RegisterSpawner(spawner);
+
+            Debug.Log("Waiting for client to connect..");
+            while (!_manager.IsServerListening || _manager.ClientState != TeleportClientProcessor.StateType.Connected)
+            {
+                yield return null;
+            }
+            Debug.Log("Client connected!");
 
             while (spawnCount-- > 0)
             {
@@ -84,16 +95,15 @@ namespace DeBox.Teleport.Tests
             yield return new WaitForSeconds(1);
 
 
-            _manager.ConnectClient();
-            _manager.RegisterClientMessage<TestMessage>();
+        
             while (duration > 0)
             {
-                _manager.SendToAllClients(new TestMessage());
+                //_manager.SendToAllClients(new TestMessage());
                 yield return new WaitForSeconds(0.01f);
                 
                 if (_manager.ClientState == TeleportClientProcessor.StateType.Connected)
                 {
-                    _manager.SendToServer(new TestMessage());
+                    //_manager.SendToServer(new TestMessage());
 
                 }
                 duration -= Time.deltaTime;

@@ -32,11 +32,11 @@ namespace DeBox.Teleport.Core
 
         public override byte[] GetNextOutgoingData()
         {
-            return _sendQueue.Dequeue();
+            return _sendQueue.Dequeue();            
         }
 
         public override void Send(byte[] data)
-        {
+        {            
             _sendQueue.Enqueue(data);
         }
 

@@ -44,6 +44,13 @@ namespace DeBox.Teleport.Unity
             Rotation = reader.ReadQuaternion();
         }
 
+        public void Serialize(TeleportWriter writer)
+        {
+            writer.Write(InstanceId);
+            writer.Write(Position);
+            writer.Write(Rotation);
+        }
+
         public ITeleportState Interpolate(ITeleportState other, float progress01)
         {
             var otherState = (TeleportTransformState)other;
@@ -51,13 +58,6 @@ namespace DeBox.Teleport.Unity
             newState.Position = Vector3.Lerp(Position, otherState.Position, progress01);
             newState.Rotation = Quaternion.Lerp(Rotation, otherState.Rotation, progress01);
             return newState;
-        }
-
-        public void Serialize(TeleportWriter writer)
-        {
-            writer.Write(InstanceId);
-            writer.Write(Position);
-            writer.Write(Rotation);
         }
     }
 

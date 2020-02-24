@@ -35,7 +35,7 @@ namespace DeBox.Teleport.Core
                 if (_enqueueIndex == ENQUEUE_INDEX_FULL_INDECATION)
                 {
                     throw new Exception("Queue is full");
-                }
+                }                
                 _queue[_enqueueIndex] = item;
                 _enqueueIndex = GetNextIndex(_enqueueIndex);
                 if (_enqueueIndex == _dequeueIndex)

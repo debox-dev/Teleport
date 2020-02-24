@@ -236,6 +236,7 @@ MonoBehaviour:
   _manager: {fileID: 1646304005}
   _spawnedPrefab: {fileID: 4887683089874196195, guid: d523aadc09f1e4fe19aa34ab3ff3803d,
     type: 3}
+  _spawnedObjectCount: 100
 --- !u!4 &1569577292
 Transform:
   m_ObjectHideFlags: 0

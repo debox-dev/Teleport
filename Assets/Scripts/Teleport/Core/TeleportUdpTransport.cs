@@ -190,8 +190,8 @@ namespace DeBox.Teleport.Core
                     channel = endpointChannels[channelId];
                     while (channel.OutgoingMessageCount > 0)
                     {
-                        data = channel.GetNextOutgoingData();
-                        data = packetBuffer.CreatePacket(channelId, data, 0, (byte)data.Length);
+                        data = channel.GetNextOutgoingData();                        
+                        data = packetBuffer.CreatePacket(channelId, data, 0, (ushort)data.Length);
                         ClientSocketSend(socket, data, data.Length, SocketFlags.None, endpoint);
                     }
                 }
