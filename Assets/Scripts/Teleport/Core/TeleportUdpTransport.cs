@@ -118,7 +118,7 @@ namespace DeBox.Teleport.Core
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
             EndPoint endpoint = (EndPoint)(sender);
             TeleportPacketBuffer packetBuffer;
-            byte[] packetData = new byte[256];
+            byte[] packetData = new byte[8096];
             int packetLength;
             byte channelId;
             int receivedDataLength;
@@ -127,7 +127,7 @@ namespace DeBox.Teleport.Core
             while (!_stopRequested)
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
-                data = new byte[1024];
+                data = new byte[8096];
 
                 while (socket.Available > 0)
                 {
@@ -223,7 +223,7 @@ namespace DeBox.Teleport.Core
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             var endpoint = new IPEndPoint(clientParams.address, clientParams.port);
             byte[] data;
-            byte[] packetData = new byte[256];
+            byte[] packetData = new byte[8096];
             int packetLength;
             TeleportPacketBuffer packetBuffer;
             byte channelId;
@@ -237,7 +237,7 @@ namespace DeBox.Teleport.Core
             while (!_stopRequested)
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
-                data = new byte[1024];
+                data = new byte[8096];
 
                 while (socket.Available > 0)
                 {

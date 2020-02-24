@@ -10,7 +10,7 @@ namespace DeBox.Teleport.Core
     {
         private const byte HEADER_LENGTH = 3;
         private const byte FIXED_PACKET_PREFIX = 3;
-        private byte[] _buffer = new byte[4096];
+        private byte[] _buffer = new byte[8096];
         private int _bufferLength = 0;
 
 

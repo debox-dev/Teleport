@@ -67,7 +67,7 @@ namespace DeBox.Teleport.Tests
         {
             Debug.Log("Test will start in 3 seconds...");
             yield return new WaitForSeconds(3);
-            int spawnCount = 100;
+            int spawnCount = 40;
             float duration = 10;
             _manager.StartServer();
 
