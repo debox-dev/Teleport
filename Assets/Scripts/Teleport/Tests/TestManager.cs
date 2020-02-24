@@ -59,39 +59,29 @@ namespace DeBox.Teleport.Tests
         private TeleportManager _manager = null;
 
         [SerializeField]
-        private bool _start;
-
-        [SerializeField]
         private GameObject _spawnedPrefab = null;
 
         private List<GameObject> _spawnedServerInstances = new List<GameObject>();
 
-        private void Update()
+        private IEnumerator Start()
         {
-            if (_start)
-            {
-                _start = false;
-                StartCoroutine(TestCoroutine());
-            }
-        }
-
-        private IEnumerator TestCoroutine()
-        {
-            int spawnCount = 3;
+            Debug.Log("Test will start in 3 seconds...");
+            yield return new WaitForSeconds(3);
+            int spawnCount = 100;
             float duration = 10;
             _manager.StartServer();
 
             _manager.RegisterServerMessage<TestMessage>();
-            //var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
-            //spawner.AssignPrefab(_spawnedPrefab);
-           // _manager.RegisterSpawner(spawner);
+            var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
+            spawner.AssignPrefab(_spawnedPrefab);
+            _manager.RegisterSpawner(spawner);
 
             while (spawnCount-- > 0)
             {
                 var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
                 _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero, config));
             }
-            yield return new WaitForSeconds(5);
+            yield return new WaitForSeconds(1);
 
 
             _manager.ConnectClient();
