@@ -98,7 +98,7 @@ namespace DeBox.Teleport.Tests
                     while (spawnCount-- > 0)
                     {
                         var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
-                        _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, config));
+                        _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero, config));
                     }
                 }
                 duration -= Time.deltaTime;

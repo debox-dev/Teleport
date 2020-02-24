@@ -10,15 +10,22 @@ namespace DeBox.Teleport.Unity
         [SerializeField] private int _port = 5000;
         [SerializeField] private TeleportChannelType[] _channelTypes = { TeleportChannelType.SequencedReliable };
         [SerializeField] private GameObject[] _prefabSpawners = new GameObject[0];
+        [SerializeField] private float _playbackDelay = 0.3f;
+
+        public float PlaybackDelay => _playbackDelay;
 
         private List<ITeleportObjectSpawner> _clientSpawners;
         private List<ITeleportObjectSpawner> _ServerSpawners;
 
         public static TeleportManager Main { get; private set; }
 
+
+
         public void StartServer() { StartServer(_port); }
 
         public void ConnectClient() { ConnectClient(_clientHostname, _port); }
+
+        public void ConnectClient(string hostname, int port) { ConnectClient(hostname, port, _playbackDelay); }
 
         protected virtual void Start()
         {
@@ -54,8 +61,8 @@ namespace DeBox.Teleport.Unity
                     basicSpawner.AssignPrefab(prefab);
                     spawner = basicSpawner;
                 }
-                var clientSpawner = spawner.Duplicate();
-                var serverSpawner = spawner.Duplicate();
+                var clientSpawner = spawner.Duplicate(TeleportObjectSpawnerType.ClientSide);
+                var serverSpawner = spawner.Duplicate(TeleportObjectSpawnerType.ServerSide);
                 clientSpawner.AssignSpawnId((ushort)i);
                 serverSpawner.AssignSpawnId((ushort)i);
                 _clientSpawners.Add(clientSpawner);
@@ -67,8 +74,8 @@ namespace DeBox.Teleport.Unity
         {
             var spawnerId = (ushort)_clientSpawners.Count;
             spawner.AssignSpawnId(spawnerId);
-            _clientSpawners.Add(spawner.Duplicate());
-            _ServerSpawners.Add(spawner.Duplicate());
+            _clientSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ClientSide));
+            _ServerSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ServerSide));
         }
 
         public ITeleportObjectSpawner GetClientSpawner(ushort spawnId)
@@ -110,10 +117,10 @@ namespace DeBox.Teleport.Unity
             throw new System.Exception("No TeleportObjectSpawner for prefab " + instance.name);
         }
 
-        public GameObject ServerSideSpawn(GameObject prefab, object instanceConfig, byte channelId = 0)
+        public GameObject ServerSideSpawn(GameObject prefab, Vector3 position, object instanceConfig, byte channelId = 0)
         {
             var spawner = GetServerSpawnerForPrefab(prefab);
-            var message = new TeleportSpawnMessage(spawner, instanceConfig);
+            var message = new TeleportSpawnMessage(spawner, position, instanceConfig);
             SendToAllClients(message, channelId);
             return message.SpawnedObject;
         }
@@ -150,6 +157,7 @@ namespace DeBox.Teleport.Unity
         {
             RegisterClientMessage<TeleportSpawnMessage>();
             RegisterClientMessage<TeleportDespawnMessage>();
+            RegisterClientMessage<TeleportStateSyncMessage>();
         }
     }
 }

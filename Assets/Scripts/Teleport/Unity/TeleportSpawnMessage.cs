@@ -13,6 +13,7 @@ namespace DeBox.Teleport.Unity
         public override byte MsgTypeId => TeleportMsgTypeIds.Spawn;
 
         public GameObject SpawnedObject { get; private set; }
+        public Vector3 Position { get; private set; }
 
         private ITeleportObjectSpawner _spawner;
         private TeleportReader _reader;
@@ -20,10 +21,11 @@ namespace DeBox.Teleport.Unity
 
         public TeleportSpawnMessage() {}
 
-        public TeleportSpawnMessage(ITeleportObjectSpawner spawner, object objectConfig)
+        public TeleportSpawnMessage(ITeleportObjectSpawner spawner, Vector3 position, object objectConfig)
         {
             _objectConfig = objectConfig;
             _spawner = spawner;
+            Position = position;
         }
 
         public void OnTimedPlayback()
@@ -32,12 +34,14 @@ namespace DeBox.Teleport.Unity
             _spawner.OnClientSpawn(_reader, instance);
             _reader.Close();
             SpawnedObject = instance;
+            SpawnedObject.transform.position = Position;
         }
 
         public override void Deserialize(TeleportReader reader)
         {
             base.Deserialize(reader);
             SpawnId = reader.ReadUInt16();
+            Position = reader.ReadVector3();
             _spawner = TeleportManager.Main.GetClientSpawner(SpawnId);
             // The reader will be closed by the time we use it, so we create a new reader
             var rawData = ((MemoryStream)reader.BaseStream).ToArray();
@@ -49,8 +53,10 @@ namespace DeBox.Teleport.Unity
         public override void Serialize(TeleportWriter writer)
         {
             var instance = _spawner.CreateInstance();
+            instance.transform.position = Position;
             base.Serialize(writer);
             writer.Write(_spawner.SpawnId);
+            writer.Write(Position);
             _spawner.OnServerSpawn(writer, instance, _objectConfig);
             SpawnedObject = instance;
         }

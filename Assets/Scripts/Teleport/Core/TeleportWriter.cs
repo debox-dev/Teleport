@@ -23,7 +23,7 @@ namespace DeBox.Teleport.Core
         {
         }
 
-        public void Write(Vector4 data)
+        public void Write(Quaternion data)
         {
             base.Write(data.x);
             base.Write(data.y);

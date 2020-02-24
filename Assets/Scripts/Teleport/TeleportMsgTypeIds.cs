@@ -7,6 +7,7 @@
         public const byte TimeSync = 2;
         public const byte Spawn = 3;
         public const byte Despawn = 4;
+        public const byte StateSync = 5;
 
         public const byte Highest = 20;
     }

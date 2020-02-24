@@ -18,6 +18,9 @@ namespace DeBox.Teleport.Unity
 
         public TeleportClientProcessor.StateType ClientState => _client == null ? TeleportClientProcessor.StateType.Disconnected : _client.State;
         public bool IsServerListening => _server != null && _server.IsListening;
+        public float ServerSideTime => _server != null ? _server.LocalTime : 0;
+        public float ClientSideServerTime => _client != null ? _client.ServerTime : 0;
+        public float ClientSideLocalTime => _client != null ? _client.LocalTime : 0;
 
         private TeleportUdpTransport CreateTransport()
         {
@@ -70,9 +73,9 @@ namespace DeBox.Teleport.Unity
             _server = null;
         }
 
-        public void ConnectClient(string hostname, int port)
+        public void ConnectClient(string hostname, int port, float playbackDelay)
         {
-            _client = new TeleportClientProcessor(CreateTransport());
+            _client = new TeleportClientProcessor(CreateTransport(), playbackDelay);
             _client.ConnectedToServer += ClientSideOnConnected;
             _client.DisconnectedFromServer += ClientSideOnDisconnected;
             _client.MessageArrived += ClientSideOnMessageArrived;

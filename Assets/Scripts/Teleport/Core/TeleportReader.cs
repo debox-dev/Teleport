@@ -37,9 +37,9 @@ namespace DeBox.Teleport.Core
             return result;
         }
 
-        public Vector4 ReadQuaternion()
+        public Quaternion ReadQuaternion()
         {
-            var result = new Vector4();
+            var result = new Quaternion();
             result.x = ReadSingle();
             result.y = ReadSingle();
             result.z = ReadSingle();
