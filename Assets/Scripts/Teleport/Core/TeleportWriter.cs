@@ -37,6 +37,13 @@ namespace DeBox.Teleport.Core
             base.Write(data);
         }
 
+        public void Write(Color data)
+        {
+            base.Write(data.r);
+            base.Write(data.g);
+            base.Write(data.b);
+        }
+
         public void Write(Vector3 data)
         {
             base.Write(data.x);

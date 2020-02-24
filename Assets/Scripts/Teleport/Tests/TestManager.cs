@@ -60,6 +60,9 @@ namespace DeBox.Teleport.Tests
         [SerializeField]
         private bool _start;
 
+        [SerializeField]
+        private GameObject _spawnedPrefab = null;
+
         private void Update()
         {
             if (_start)
@@ -71,11 +74,15 @@ namespace DeBox.Teleport.Tests
 
         private IEnumerator TestCoroutine()
         {
+            int spawnCount = 3;
             float duration = 20;
             _manager.StartServer();
             _manager.ConnectClient();
             _manager.RegisterClientMessage<TestMessage>();
             _manager.RegisterServerMessage<TestMessage>();
+            var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
+            spawner.AssignPrefab(_spawnedPrefab);
+            _manager.RegisterSpawner(spawner);
 
             while (duration > 0)
             {
@@ -85,6 +92,11 @@ namespace DeBox.Teleport.Tests
                 if (_manager.ClientState == TeleportClientProcessor.StateType.Connected)
                 {
                     _manager.SendToServer(new TestMessage());
+                    while (spawnCount-- > 0)
+                    {
+                        var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
+                        _manager.ServerSideSpawn(_spawnedPrefab, config);
+                    }
                 }                
                 duration -= Time.deltaTime;
             }

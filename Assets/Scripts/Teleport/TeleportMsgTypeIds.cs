@@ -5,6 +5,8 @@
         public const byte Handshake = 0;
         public const byte Disconnect = 1;
         public const byte TimeSync = 2;
+        public const byte Spawn = 3;
+        public const byte Despawn = 4;
 
         public const byte Highest = 20;
     }

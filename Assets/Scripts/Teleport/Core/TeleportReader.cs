@@ -28,6 +28,15 @@ namespace DeBox.Teleport.Core
             return base.ReadBytes(length);
         }
 
+        public Color ReadColor()
+        {
+            var result = new Color();
+            result.r = ReadSingle();
+            result.g = ReadSingle();
+            result.b = ReadSingle();
+            return result;
+        }
+
         public Vector4 ReadQuaternion()
         {
             var result = new Vector4();

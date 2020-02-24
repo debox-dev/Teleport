@@ -54,6 +54,7 @@ namespace DeBox.Teleport.Unity
             _server.ClientDisconnected += ServerSideOnClientDisconnected;
             _server.MessageArrived += ServerSideOnMessageArrived;
             _server.ServerBecameOnline += ServerStarted;
+            ServerSidePrestart();
             _server.Listen(port);
         }
 
@@ -75,6 +76,7 @@ namespace DeBox.Teleport.Unity
             _client.ConnectedToServer += ClientSideOnConnected;
             _client.DisconnectedFromServer += ClientSideOnDisconnected;
             _client.MessageArrived += ClientSideOnMessageArrived;
+            ClientSidePreconnect();
             _client.Connect(hostname, port);
         }
 
@@ -121,11 +123,12 @@ namespace DeBox.Teleport.Unity
         public abstract void ServerSideOnClientConnected(uint clientId, EndPoint endpoint);
         public abstract void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason);
         public abstract void ServerSideOnMessageArrived(uint clientId, EndPoint endpoint, ITeleportMessage message);
+        public abstract void ServerSidePrestart();
 
         public abstract void ClientSideOnConnected(uint clientId);
         public abstract void ClientSideOnDisconnected(uint clientId, TeleportClientProcessor.DisconnectReasonType reason);
         public abstract void ClientSideOnMessageArrived(ITeleportMessage message);
-        
+        public abstract void ClientSidePreconnect();
 
         public void RegisterServerMessage<T>() where T : ITeleportMessage, new()
         {
