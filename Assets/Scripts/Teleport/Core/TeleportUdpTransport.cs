@@ -10,7 +10,7 @@ namespace DeBox.Teleport.Core
 {
     public class TeleportUdpTransport
     {
-        private enum TransportType
+        public enum TransportType
         {
             None,
             Client,
@@ -31,6 +31,7 @@ namespace DeBox.Teleport.Core
         private EndpointCollection _endpointCollection = null;
 
         public bool ThreadStarted { get; private set; } = false;
+        public TransportType Type => _transportType;
 
         public TeleportUdpTransport(params Func<BaseTeleportChannel>[] channelCreators)
         {

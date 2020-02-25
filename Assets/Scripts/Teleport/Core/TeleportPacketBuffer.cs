@@ -118,8 +118,6 @@ namespace DeBox.Teleport.Core
             return dataCrc == crc;
         }
 
-        private bool oneCrc = false;
-
         private byte CreateHeader(byte[] outHeader, byte channelId, byte[] data, int startPosition, ushort length)
         {
             var random = new System.Random();

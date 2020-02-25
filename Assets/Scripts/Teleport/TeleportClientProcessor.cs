@@ -35,10 +35,11 @@ namespace DeBox.Teleport
         private float _nextTimeSyncTime;
         private float _timedMessagePlaybackDelay;
         private float _handshakeTime;
-        private bool _isTimeSynced;
+        
 
         public StateType State { get; private set; }
         public float ServerTime { get; private set; }
+        public bool IsTimeSynchronized { get; private set; }
 
         public TeleportClientProcessor(TeleportUdpTransport transport, float timedMessagePlaybackDelay = 0.08f) : base(transport)
         {
@@ -50,7 +51,7 @@ namespace DeBox.Teleport
         public void Connect(string host, int port)
         {
             _isAuthenticated = false;
-            _isTimeSynced = false;
+            IsTimeSynchronized = false;
             ServerTime = -1;
             _nextTimeSyncTime = -1;
             StartUnityHelper("Client");
@@ -224,7 +225,7 @@ namespace DeBox.Teleport
             var delta = estimatedServerTime - ServerTime;
             var absDelta = Math.Abs(delta);
             var deltaSign = Math.Sign(delta);
-            _isTimeSynced = true;
+            IsTimeSynchronized = true;
             State = StateType.Connected;
             if (absDelta > TIME_SYNC_MAX_TIME_DRIFT_BEFORE_HARD_SET_IN_SECONDS)
             {
