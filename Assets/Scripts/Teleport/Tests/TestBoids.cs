@@ -23,6 +23,16 @@ namespace DeBox.Teleport.Tests
 
         private List<GameObject> _spawnedServerInstances = new List<GameObject>();
 
+        private float RandomizeFloat(float magnitude)
+        {
+            return Random.Range(-magnitude, magnitude);
+        }
+
+        private Vector3 RandomizeVector(float magnitude)
+        {
+            return new Vector3(RandomizeFloat(magnitude), RandomizeFloat(magnitude), RandomizeFloat(magnitude));
+        }
+
         private IEnumerator Start()
         {
             Debug.Log("Test will start in 3 seconds...");
@@ -41,7 +51,7 @@ namespace DeBox.Teleport.Tests
             while (spawnCount-- > 0)
             {
                 var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
-                _spawnedServerInstances.Add(_manager.ServerSideSpawn(_serverPrefab, Vector3.one * Random.Range(-10, 10), config));
+                _spawnedServerInstances.Add(_manager.ServerSideSpawn(_serverPrefab, RandomizeVector(60), config));
             }
             yield return new WaitForSeconds(2);
             Debug.Log("Waiting for client to connect..");
