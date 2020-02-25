@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 using UnityEngine;
+using DeBox.Teleport.Utils;
 
 namespace DeBox.Teleport.Core
 {
@@ -23,12 +24,30 @@ namespace DeBox.Teleport.Core
         {
         }
 
+        public void Write(float value, FloatCompressionTypeShort compressionType)
+        {
+            Write(CompressionUtils.CompressToShort(value, compressionType));
+        }
+
+        public void Write(float value, FloatCompressionTypeChar compressionType)
+        {
+            Write(CompressionUtils.CompressToChar(value, compressionType));
+        }
+
         public void Write(Quaternion data)
         {
             base.Write(data.x);
             base.Write(data.y);
             base.Write(data.z);
             base.Write(data.w);
+        }
+
+        public void Write(Quaternion data, FloatCompressionTypeShort compressionType)
+        {
+            Write(data.x, compressionType);
+            Write(data.y, compressionType);
+            Write(data.z, compressionType);
+            Write(data.w, compressionType);
         }
 
         public void WriteBytesAndSize(byte[] data, byte length)
@@ -51,10 +70,23 @@ namespace DeBox.Teleport.Core
             base.Write(data.z);
         }
 
+        public void Write(Vector3 data, FloatCompressionTypeShort compressionType)
+        {
+            Write(data.x, compressionType);
+            Write(data.y, compressionType);
+            Write(data.z, compressionType);
+        }
+
         public void Write(Vector2 data)
         {
             base.Write(data.x);
             base.Write(data.y);
+        }
+
+        public void Write(Vector2 data, FloatCompressionTypeShort compressionType)
+        {
+            Write(data.x, compressionType);
+            Write(data.y, compressionType);
         }
     }
 

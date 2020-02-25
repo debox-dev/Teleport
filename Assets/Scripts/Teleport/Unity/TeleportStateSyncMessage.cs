@@ -29,7 +29,6 @@ namespace DeBox.Teleport.Unity
         {
             base.Serialize(writer);
             writer.Write(_spawnId);
-            //UnityEngine.Debug.Log("Sending " + (ushort)_states.Length + " states!");
             writer.Write((ushort)_states.Length);
             for (int i = 0; i < _states.Length; i++)
             {

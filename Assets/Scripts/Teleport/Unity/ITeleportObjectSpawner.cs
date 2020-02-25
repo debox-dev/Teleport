@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using DeBox.Teleport.Core;
+using DeBox.Teleport.Utils;
 
 namespace DeBox.Teleport.Unity
 {
@@ -40,15 +41,15 @@ namespace DeBox.Teleport.Unity
         public void Deserialize(TeleportReader reader)
         {
             InstanceId = reader.ReadUInt16();
-            Position = reader.ReadVector3();
-            Rotation = reader.ReadQuaternion();
+            Position = reader.ReadVector3(FloatCompressionTypeShort.Short_Two_Decimals);
+            Rotation = reader.ReadQuaternion(FloatCompressionTypeShort.Short_Two_Decimals);
         }
 
         public void Serialize(TeleportWriter writer)
         {
             writer.Write(InstanceId);
-            writer.Write(Position);
-            writer.Write(Rotation);
+            writer.Write(Position, FloatCompressionTypeShort.Short_Two_Decimals);
+            writer.Write(Rotation, FloatCompressionTypeShort.Short_Two_Decimals);
         }
 
         public ITeleportState Interpolate(ITeleportState other, float progress01)
