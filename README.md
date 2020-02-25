@@ -93,6 +93,10 @@ public class MyMessage : BaseTeleportMessage
     public Vector3 Position { get; private set; }
     public override byte MsgTypeId { get { return TeleportMsgTypeIds.Highest + 1; } }
 
+    // Deserialization constructor
+    public MyMessage() {}
+
+    // Actual constructor
     public MyMessage(Vector3 position)
     {
         Position = position;
