@@ -105,13 +105,15 @@ public class MyMessage : BaseTeleportMessage
     public override void Serialize(DeBox.Teleport.Core.TeleportWriter writer)
     {
         base.Serialize(writer);
-        writer.Write(Position);
+	// Write a compressed Vector3
+        writer.Write(Position, FloatCompressionTypeShort.Short_Two_Decimals);
     }
 
     public override void Deserialize(DeBox.Teleport.Core.TeleportReader reader)
     {
         base.Deserialize(reader);
-        Position = reader.ReadVector3();
+	// Read a compressed Vector3
+        Position = reader.ReadVector3(FloatCompressionTypeShort.Short_Two_Decimals);
     }
 
     public override void OnArrivalToClient()
