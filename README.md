@@ -28,6 +28,8 @@ Teleport is a real-time multiplayer framework for Unity.
 * Tests
 
 ## Simple setup
+Teleport allows us to test the client and server simultaneously in the same scene, we will use this ability to quickly set up a working network scene
+
 1. Open your project
 2. Add `"com.debox.teleport": "https://github.com/debox-dev/Teleport.git"` to the `dependencies` list. of your `manifest.json`, see "Installation instructions" for more information
 3. Add an empty GameObject to your scene and name it "TeleportManager"
