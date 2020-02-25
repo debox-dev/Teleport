@@ -123,6 +123,21 @@ public class MyMessage : BaseTeleportMessage
 }
 ```
 
+#### Registering messages
+On the client
+```
+TeleportManager.Main.RegisterClientMessage<MyMessage>();
+```
+On the server
+```
+TeleportManager.Main.RegisterClientMessage<MyMessage>();
+```
+On both
+```
+TeleportManager.Main.RegisterTwoWayMessage<MyMessage>();
+```
+
+
 #### Message events
 * PreSendServer - Called before the server sends the message, use this for setup of the message
 * PreSendClient - Called beofer the client sends the message, use this for setup of the message

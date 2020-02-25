@@ -1,20 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using DeBox.Teleport.Unity;
+using UnityEngine;
+
+using Random = System.Random;
 
 namespace DeBox.Teleport.Core
 {
     public class TeleportChaoticPacketBuffer : ITeleportPacketBuffer
     {
+        private const float MILLISECONDS_IN_SECOND = 1000f;
+        private const int ALWAYS_DROP_AT_QUEUE_COUNT = 1000000;
+
         [Serializable]
         public class ChaosSettings
         {
             public bool EnableChaos = false;
             public int RandomSeed = 1;
-            public float MinDelay = 0.05f;
-            public float MaxDelay = 0.2f;
+            [Range(0, 400)]
+            public float MinDelay = 50f;
+            [Range(0, 500)]
+            public float MaxDelay = 200f;
+            [Range(0, 10)]
             public int ScrambleBitCount = 3;
+            [Range(0, 100)]
             public int ScrambleChance = 30;
+            [Range(0, 100)]
             public int DropChance = 30;
         }
 
@@ -125,7 +135,7 @@ namespace DeBox.Teleport.Core
         public void ReceiveRawData(byte[] data, int dataLength)
         {
             var timestamp = GetNow() + GetRandomDelayInSeconds();
-            bool shouldDrop = ((_random.Next() % 100) < _settings.DropChance) || _incomingDelayQueue.Count > 100000;
+            bool shouldDrop = ((_random.Next() % 100) < _settings.DropChance) || _incomingDelayQueue.Count > ALWAYS_DROP_AT_QUEUE_COUNT;
             if (shouldDrop)
             {
                 return;
@@ -164,7 +174,7 @@ namespace DeBox.Teleport.Core
         private double GetRandomDelayInSeconds()
         {
             var range = Math.Abs(_settings.MaxDelay - _settings.MinDelay);
-            return (_random.NextDouble() * range) + _settings.MinDelay;
+            return ((_random.NextDouble() * range) + _settings.MinDelay) / MILLISECONDS_IN_SECOND; // Convert from milliseconds
         }
 
         private void ScrambleData(byte[] data, ushort length, int bitCountToScramble)

@@ -7,7 +7,10 @@ namespace DeBox.Teleport.Unity
     public class BasicTeleportObjectSpawner : MonoBehaviour, ITeleportObjectSpawner
     {
         [SerializeField]
-        private GameObject _prefab = null;
+        private GameObject _serverPrefab = null;
+
+        [SerializeField]
+        private GameObject _clientPrefab = null;
 
         [SerializeField]
         private bool _syncTransform = true;
@@ -28,7 +31,7 @@ namespace DeBox.Teleport.Unity
 
         public bool IsManagedPrefab(GameObject prefab)
         {
-            return prefab == _prefab;
+            return prefab == _serverPrefab;
         }
 
         public bool IsManagedInstance(GameObject instance)
@@ -40,11 +43,11 @@ namespace DeBox.Teleport.Unity
 
         public GameObject CreateInstance()
         {
-            if (_prefab == null)
+            if (_serverPrefab == null)
             {
                 throw new System.Exception("BasicTeleportObjectSpawner: Prefab cannot be null!");
             }
-            return Instantiate(_prefab);
+            return Instantiate(_spawnerType == TeleportObjectSpawnerType.ServerSide ? _serverPrefab : _clientPrefab);
         }
 
         public void DestroyInstance(GameObject instance)
@@ -52,19 +55,15 @@ namespace DeBox.Teleport.Unity
             Destroy(instance);
         }
 
-        public void SetPrefab(GameObject prefab)
-        {
-            _prefab = prefab;
-        }
-
         public void AssignSpawnId(ushort spawnId)
         {
             SpawnId = spawnId;
         }
 
-        public void AssignPrefab(GameObject prefab)
+        public void AssignPrefab(GameObject serverPrefab, GameObject clientPrefab)
         {
-            _prefab = prefab;
+            _serverPrefab = serverPrefab;
+            _clientPrefab = clientPrefab;
         }
 
         public void OnClientDespawn(TeleportReader reader, GameObject despawned)

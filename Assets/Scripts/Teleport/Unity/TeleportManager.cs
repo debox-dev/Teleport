@@ -83,7 +83,7 @@ namespace DeBox.Teleport.Unity
                     var go = new GameObject("TeleportSpawner_" + prefab.name);
                     go.hideFlags = HideFlags.HideAndDontSave;
                     var basicSpawner = go.AddComponent<BasicTeleportObjectSpawner>();
-                    basicSpawner.AssignPrefab(prefab);
+                    basicSpawner.AssignPrefab(prefab, prefab);
                     spawner = basicSpawner;
                 }
                 var clientSpawner = spawner.Duplicate(TeleportObjectSpawnerType.ClientSide);

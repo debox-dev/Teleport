@@ -148,6 +148,12 @@ namespace DeBox.Teleport.Unity
             RegisterMessage<T>(_client);
         }
 
+        public void RegisterTwoWayMessage<T>() where T : ITeleportMessage, new()
+        {
+            RegisterClientMessage<T>();
+            RegisterServerMessage<T>();
+        }
+
         private void RegisterMessage<T>(BaseTeleportProcessor processor) where T : ITeleportMessage, new()
         {
             processor.RegisterMessage<T>();
