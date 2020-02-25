@@ -121,6 +121,55 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &1167679165
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1167679167}
+  - component: {fileID: 1167679166}
+  m_Layer: 0
+  m_Name: Spawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1167679166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1167679165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5855c5f6570a24c8e8346166b22a5be4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _serverPrefab: {fileID: 8934495773799932054, guid: 39efa34324c12e548ba2557f94e29224,
+    type: 3}
+  _clientPrefab: {fileID: 7013156604259496328, guid: 0518ac52d8dde2d4db04b639da530f25,
+    type: 3}
+  _syncTransform: 1
+  _stateUpdateRateInSeconds: 0.05
+--- !u!4 &1167679167
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1167679165}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4, y: -13, z: 8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1302919525
 GameObject:
   m_ObjectHideFlags: 0
@@ -203,13 +252,14 @@ MonoBehaviour:
   _clientHostname: localhost
   _port: 4005
   _channelTypes: 00000000
-  _prefabSpawners: []
-  _playbackDelay: 0.3
+  _prefabSpawners:
+  - {fileID: 1167679165}
+  _playbackDelay: 0.4
   _chaosSettings:
-    EnableChaos: 0
+    EnableChaos: 1
     RandomSeed: 3
-    MinDelay: 0
-    MaxDelay: 0
+    MinDelay: 35
+    MaxDelay: 100
     ScrambleBitCount: 0
     ScrambleChance: 0
     DropChance: 0

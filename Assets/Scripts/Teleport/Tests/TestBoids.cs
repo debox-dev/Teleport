@@ -16,9 +16,6 @@ namespace DeBox.Teleport.Tests
         private GameObject _serverPrefab = null;
 
         [SerializeField]
-        private GameObject _clientPrefab = null;
-
-        [SerializeField]
         private int _spawnedObjectCount = 10;
 
         [SerializeField]
@@ -35,9 +32,6 @@ namespace DeBox.Teleport.Tests
             _manager.StartServer();
 
             _manager.RegisterServerMessage<TestMessage>();
-            var spawner = new GameObject("Spanwer").AddComponent<TestSpawner>();
-            spawner.AssignPrefab(_serverPrefab, _clientPrefab);
-            _manager.RegisterSpawner(spawner);
             Debug.Log("Waiting for server to start...");
             while (!_manager.IsServerListening)
             {

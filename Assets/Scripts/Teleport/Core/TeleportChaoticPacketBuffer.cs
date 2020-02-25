@@ -134,7 +134,7 @@ namespace DeBox.Teleport.Core
 
         public void ReceiveRawData(byte[] data, int dataLength)
         {
-            var timestamp = GetNow() + GetRandomDelayInSeconds();
+            var timestamp = GetNow() + GetRandomDelayInSeconds() * 0.5f; // Ping is full trip time, since we scramble both server and client, we cut the duration in half
             bool shouldDrop = ((_random.Next() % 100) < _settings.DropChance) || _incomingDelayQueue.Count > ALWAYS_DROP_AT_QUEUE_COUNT;
             if (shouldDrop)
             {
