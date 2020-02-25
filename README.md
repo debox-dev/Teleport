@@ -36,7 +36,7 @@ Teleport allows us to test the client and server simultaneously in the same scen
 4. Add the "TeleportManager" componend to the empty GameObject
 5. Choose a prefab you'd like to synchronize. Any prefab will do. There is no need to add anything to the prefab.
 6. Drag the prefab to the **Prefab Spawners** list of the `TeleportManager` component
-7. Create a connection script
+7. Create a connection script `NetworkStarter.cs`
 ```
 using System.Collections;
 using UnityEngine;
