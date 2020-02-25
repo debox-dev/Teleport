@@ -127,7 +127,7 @@ public class MyMessage : BaseTeleportMessage
 * OnArrivalToClient - Called as soon as the client receives the message, after it was deserialized
 * OnArrivalToServer - Called as soon as the server receives the message, after it was deserialized
 
-#### Sending Messages
+#### Sending Messages Sever => Client
 1. To all clients
 ```
 TeleportManager.Main.SendToAllClients(new MyMessage(Vector3.one));
@@ -143,4 +143,9 @@ TeleportManager.Main.SendToClients(new MyMessage(Vector3.one), channelId: 0, cli
 4. To all clients, except specific clients
 ```
 TeleportManager.Main.SendToAllExcept(new MyMessage(Vector3.one), channelId: 0, clientIdsArray);
+```
+
+#### Sending Messages Client => Server
+```
+TeleportManager.Main.SendToServer(new MyMessage(Vector3.one), channelId: 0);
 ```
