@@ -1,16 +1,23 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
+using DeBox.Teleport.Core;
 
 namespace DeBox.Teleport.Unity
 {
     public class TeleportManager : BaseTeleportManager
     {
+        [Header("Connection")]
         [SerializeField] private string _clientHostname = "localhost";
         [SerializeField] private int _port = 5000;
         [SerializeField] private TeleportChannelType[] _channelTypes = { TeleportChannelType.SequencedReliable };
+        [Header("Prefabs")]
         [SerializeField] private GameObject[] _prefabSpawners = new GameObject[0];
+        [Header("Client Playback")]
         [SerializeField] private float _playbackDelay = 0.3f;
+        [Header("Chaos Generator")]
+        [SerializeField] private TeleportChaoticPacketBuffer.ChaosSettings _chaosSettings = null;
 
         public float PlaybackDelay => _playbackDelay;
 
@@ -52,6 +59,15 @@ namespace DeBox.Teleport.Unity
             {
                 Main = null;
             }
+        }
+
+        protected override Func<ITeleportPacketBuffer> GetBufferCreator()
+        {
+            if (_chaosSettings == null || !_chaosSettings.EnableChaos)
+            {
+                return base.GetBufferCreator();
+            }
+ 	        return () => new TeleportChaoticPacketBuffer(_chaosSettings);
         }
 
         private void InitSpawners()

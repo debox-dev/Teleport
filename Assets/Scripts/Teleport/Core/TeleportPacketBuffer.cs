@@ -6,9 +6,9 @@ using DeBox.Teleport.Utils;
 
 namespace DeBox.Teleport.Core
 {
-    public class TeleportPacketBuffer
+    public class TeleportPacketBuffer : ITeleportPacketBuffer
     {
-        private const byte HEADER_LENGTH = 3;
+        private const byte HEADER_LENGTH = 4;
         private const byte FIXED_PACKET_PREFIX = 3;
         private byte[] _buffer = new byte[8096];
         private int _bufferLength = 0;
@@ -16,7 +16,11 @@ namespace DeBox.Teleport.Core
 
         public void ReceiveRawData(byte[] data, int dataLength)
         {
-            
+            if (_bufferLength + dataLength > _buffer.Length)
+            {
+                Debug.LogError("Buffer overflow! Dropping entire buffer");
+                _bufferLength = 0;
+            }
             Array.Copy(data, 0, _buffer, _bufferLength, dataLength);
             _bufferLength += dataLength;
             
@@ -53,20 +57,32 @@ namespace DeBox.Teleport.Core
         {
             
             ushort dataLength;
-            byte crc, headerLength;
-            if (!ParseHeader(_buffer, 0, out crc, out channelId, out dataLength, out headerLength))
+            byte crc, headerLength, headerCrc;
+            if (_bufferLength == 0)
+            {
+                channelId = 0;
+                return 0;
+            }
+            if (!ParseHeader(_buffer, 0, out crc, out headerCrc, out channelId, out dataLength, out headerLength))
             {
                 Debug.LogError("invalid message header!!!");
                 AdvanceToNextViablePacket();
                 return 0;
             }
+            var dataLengthBytes = BitConverter.GetBytes(dataLength);
+            var actualHeaderCrc = CrcUtils.Checksum(new byte[] { channelId, dataLengthBytes[0], dataLengthBytes[1] }, 0, 3, 256);
+            if (actualHeaderCrc != headerCrc)
+            {
+                Debug.LogError("header crc check failed");
+                AdvanceToNextViablePacket();
+                return 0;
+            }
             if (_bufferLength == 0)
-            {                
+            {
                 return 0;
             }
             if (_bufferLength < (headerLength + dataLength))
             {
-                Debug.Log("Buffer too small! " + _bufferLength + " < " + (headerLength + dataLength));
                 return 0; //not enough data
             }
 
@@ -79,7 +95,7 @@ namespace DeBox.Teleport.Core
 
             if (!ValidateCrc(crc, outBuffer, 0, dataLength))
             {
-                Debug.LogError("crc check failed");
+                Debug.LogError("data crc check failed");
                 AdvanceToNextViablePacket();
                 return 0;
             }
@@ -98,12 +114,13 @@ namespace DeBox.Teleport.Core
             return prefix == FIXED_PACKET_PREFIX;
         }
 
-        private bool ParseHeader(byte[] data, int position, out byte crc, out byte channelId, out ushort length, out byte headerLength)
+        private bool ParseHeader(byte[] data, int position, out byte crc, out byte headerCrc, out byte channelId, out ushort length, out byte headerLength)
         {
             crc = ReadBits(data[position], 0, 0b11);
             channelId = ReadBits(data[position], 2, 0b11);
             var prefix = ReadBits(data[position], 6, 0b11);
             length = BitConverter.ToUInt16(data, position + 1);
+            headerCrc = data[position + 3];
             headerLength = HEADER_LENGTH;
             if (prefix != FIXED_PACKET_PREFIX)
             {
@@ -114,20 +131,22 @@ namespace DeBox.Teleport.Core
 
         private bool ValidateCrc(byte crc, byte[] data, byte position, ushort length)
         {
-            var dataCrc = CrcUtils.Checksum(data, position, length);
+            var dataCrc = CrcUtils.Checksum(data, position, length, 4);
             return dataCrc == crc;
         }
 
         private byte CreateHeader(byte[] outHeader, byte channelId, byte[] data, int startPosition, ushort length)
         {
             var random = new System.Random();
-            var crc = CrcUtils.Checksum(data, startPosition, length);
+            var lengthBytes = BitConverter.GetBytes(length);
+            var crc = CrcUtils.Checksum(data, startPosition, length, 4);
+            var headerCrc = CrcUtils.Checksum(new byte[] { channelId, lengthBytes[0], lengthBytes[1] }, 0, 3, 256);
             outHeader[0] = crc;
             outHeader[0] |= (byte)(channelId << 2);
-            outHeader[0] |= (byte)(FIXED_PACKET_PREFIX << 6);
-            var lengthBytes = BitConverter.GetBytes(length);
+            outHeader[0] |= (byte)(FIXED_PACKET_PREFIX << 6);            
             outHeader[1] = lengthBytes[0];
             outHeader[2] = lengthBytes[1];
+            outHeader[3] = headerCrc;
             return HEADER_LENGTH;
         }
     

@@ -11,18 +11,20 @@ namespace DeBox.Teleport.Core
         private readonly DateTime _epocDateTime;
         private readonly Dictionary<EndPoint, double> _endpointPings;
         private readonly Dictionary<EndPoint, BaseTeleportChannel[]> _endpointChannels;
-        private readonly Dictionary<EndPoint, TeleportPacketBuffer> _endpointPacketBuffers;
+        private readonly Dictionary<EndPoint, ITeleportPacketBuffer> _endpointPacketBuffers;
         private readonly Func<BaseTeleportChannel>[] _channelCreators;
+        private readonly Func<ITeleportPacketBuffer> _bufferCreator;
         private readonly object _lock;
 
-        public EndpointCollection(double secondsTimeout, Func<BaseTeleportChannel>[] channelCreators)
+        public EndpointCollection(double secondsTimeout, Func<BaseTeleportChannel>[] channelCreators, Func<ITeleportPacketBuffer> bufferCreator)
         {
             SecondsTimeout = secondsTimeout;
             _endpointPings = new Dictionary<EndPoint, double>();
             _endpointChannels = new Dictionary<EndPoint, BaseTeleportChannel[]>();
-            _endpointPacketBuffers = new Dictionary<EndPoint, TeleportPacketBuffer>();
+            _endpointPacketBuffers = new Dictionary<EndPoint, ITeleportPacketBuffer>();
             _epocDateTime = new DateTime(1970, 1, 1);
             _channelCreators = channelCreators;
+            _bufferCreator = bufferCreator;
             _lock = new object();
         }
 
@@ -33,7 +35,7 @@ namespace DeBox.Teleport.Core
                 if (!_endpointPings.ContainsKey(endpoint))
                 { 
                     _endpointChannels[endpoint] = CreateChannels();
-                    _endpointPacketBuffers[endpoint] = new TeleportPacketBuffer();
+                    _endpointPacketBuffers[endpoint] = _bufferCreator();
                 }
                 _endpointPings[endpoint] = GetEpoc();
             }
@@ -50,7 +52,7 @@ namespace DeBox.Teleport.Core
             return channels;
         }
 
-        public TeleportPacketBuffer GetBufferOfEndpoint(EndPoint endpoint)
+        public ITeleportPacketBuffer GetBufferOfEndpoint(EndPoint endpoint)
         {
             return _endpointPacketBuffers[endpoint];
         }

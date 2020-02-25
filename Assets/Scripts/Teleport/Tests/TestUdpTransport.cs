@@ -24,8 +24,8 @@ namespace DeBox.Teleport.Tests
             _serverMissingSeqs = new List<int>();
             Debug.Log("Starting test in 3 seconds...");
             yield return new WaitForSeconds(3);
-            var server = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
-            var client = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            var server = new TeleportUdpTransport(() => new TeleportPacketBuffer(), () => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            var client = new TeleportUdpTransport(() => new TeleportPacketBuffer(), () => new SequencedTeleportChannel(new SimpleTeleportChannel()));
             server.StartListener(port);
             client.StartClient("127.0.0.1", port);
             Debug.Log("Waiting for client and server to start...");

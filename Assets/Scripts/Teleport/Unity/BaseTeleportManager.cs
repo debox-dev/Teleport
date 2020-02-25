@@ -24,7 +24,12 @@ namespace DeBox.Teleport.Unity
 
         private TeleportUdpTransport CreateTransport()
         {
-            return new TeleportUdpTransport(GetChannelCreators());
+            return new TeleportUdpTransport(GetBufferCreator(), GetChannelCreators());
+        }
+
+        protected virtual Func<ITeleportPacketBuffer> GetBufferCreator()
+        {
+            return () => new TeleportPacketBuffer();
         }
 
         private Func<BaseTeleportChannel>[] GetChannelCreators()

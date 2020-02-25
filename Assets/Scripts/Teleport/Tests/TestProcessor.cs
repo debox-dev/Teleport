@@ -105,8 +105,8 @@ namespace DeBox.Teleport.Tests
         {
             float testDuration = 30;
             var port = 6000;
-            var serverTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));
-            var clientTransport = new TeleportUdpTransport(() => new SequencedTeleportChannel(new SimpleTeleportChannel()));          
+            var serverTransport = new TeleportUdpTransport(() => new TeleportPacketBuffer(), () => new SequencedTeleportChannel(new SimpleTeleportChannel()));
+            var clientTransport = new TeleportUdpTransport(() => new TeleportPacketBuffer(), () => new SequencedTeleportChannel(new SimpleTeleportChannel()));          
             var server = new TeleportServerProcessor(serverTransport);
             var client = new TeleportClientProcessor(clientTransport);
             server.RegisterMessage<TestMessage>();

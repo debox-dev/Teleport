@@ -2,7 +2,7 @@
 {
     public static class CrcUtils
     {
-        public static byte Checksum(byte[] data, long startOffset, long amount, params byte[] additional)
+        public static byte Checksum(byte[] data, long startOffset, long amount, int maxChecksum)
         {
             byte checksumCalculated = 0;
             unchecked
@@ -11,12 +11,12 @@
                 {
                     checksumCalculated += data[i];
                 }
-                for (long i = 0; i < additional.Length; i++)
+                /*for (long i = 0; i < additional.Length; i++)
                 {
                     checksumCalculated += additional[i];
-                }
+                }*/
             }
-            return (byte)(checksumCalculated % 4);
+            return (byte)(checksumCalculated % maxChecksum);
         }
     }
 }
