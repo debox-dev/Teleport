@@ -206,10 +206,10 @@ MonoBehaviour:
   _prefabSpawners: []
   _playbackDelay: 0.3
   _chaosSettings:
-    EnableChaos: 1
+    EnableChaos: 0
     RandomSeed: 3
-    MinDelay: 33
-    MaxDelay: 78
+    MinDelay: 0
+    MaxDelay: 0
     ScrambleBitCount: 0
     ScrambleChance: 0
     DropChance: 0
