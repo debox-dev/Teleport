@@ -154,9 +154,30 @@ namespace DeBox.Teleport.Unity
             RegisterServerMessage<T>();
         }
 
+        public void UnregisterClientMessage<T>() where T : ITeleportMessage, new()
+        {
+            UnregisterMessage<T>(_client);
+        }
+
+        public void UnregisterServerMessage<T>() where T : ITeleportMessage, new()
+        {
+            UnregisterMessage<T>(_server);
+        }
+
+        public void UnregisterTwoWayMessage<T>() where T : ITeleportMessage, new()
+        {
+            UnregisterClientMessage<T>();
+            UnregisterServerMessage<T>();
+        }
+
         private void RegisterMessage<T>(BaseTeleportProcessor processor) where T : ITeleportMessage, new()
         {
             processor.RegisterMessage<T>();
+        }
+
+        private void UnregisterMessage<T>(BaseTeleportProcessor processor) where T : ITeleportMessage, new()
+        {
+            processor.UnregisterMessage<T>();
         }
     }
 }
