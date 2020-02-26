@@ -193,7 +193,7 @@ The header CRC is the sum of the bytes of the following items
 1. Fixed packet prefix
 2. Channel Id
 3. Data CRC
-4. Data Length
+4. Data Length (With the Header CRC bits set to zero)
 
 ##### 5. Data Length (12 bits, trimmed ushort, max=4096)
 This is the length of the data. It is a ushort trimmed to 1.5 bytes (12 bit). This results in a maximum of 4096 bytes (4K) per packet. This is sufficient enougth and even if it is not, this can be resolved by breaking down data to smaller packets at the channel level (See AggregatingTeleportChannel, not yet tested)
