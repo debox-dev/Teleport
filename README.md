@@ -10,7 +10,7 @@ Teleport is a real-time multiplayer framework for Unity.
 
 
 ## Requirements
-- Unity 2013 or higher.
+- Unity 2019 or higher.
 
 ## Features
 * Easy to set-up
