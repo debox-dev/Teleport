@@ -173,12 +173,33 @@ TeleportManager.Main.SendToServer(new MyMessage(Vector3.one), channelId: 0);
 
 ## Packet structure
 #### Packet structure overview
-1. Fixed packet prefix (2 bits)
-2. Channel Id (2 bits)
-3. Data CRC (4 bits)
-4. Header CRC (4 bits) 
-5. Data Length (12 bits, trimmed ushort, max=4096)
-6. Actual data (Variable, according to value of Data Length)
+##### 1. Fixed packet prefix (2 bits)
+The fixed packet prefix is a fixed value that always prepends the packet header
+This value is used by Teleport to identify where a packet may start in case of data consistency errors.
+
+For example - If a packet arrived with a header error, there is no way to know where the next packet starts, so Teleport must search for the fixed prefix to understand where the next packet is. If it finds something that looks like a packet, but is now - we expect it to fail the CRC check and so Teleport will continue to search onward.
+
+##### 2. Channel Id (2 bits)
+This is the channel id of the packet. Each channel may process the packet data differently so it is important for the system to know which channel should handle this packet
+
+##### 3. Data CRC (4 bits)
+This is the CRC of the data. Teleport sums up the bytes of the data, modded by the number 4 - resulting in a 4 bit number.
+
+##### 4. Header CRC (4 bits) 
+The header of the packet is critical as it tells the system how long the packet is. If the packet header is damaged, Teleport may try to read an infinetly long packet.
+Because the data CRC depends on reading the entire packet, we CRC the header separately in order to quickly check if we can receive the data, or immediately dispose this packet.
+
+The header CRC is the sum of the bytes of the following items
+1. Fixed packet prefix
+2. Channel Id
+3. Data CRC
+4. Data Length
+
+##### 5. Data Length (12 bits, trimmed ushort, max=4096)
+This is the length of the data. It is a ushort trimmed to 1.5 bytes (12 bit). This results in a maximum of 4096 bytes (4K) per packet. This is sufficient enougth and even if it is not, this can be resolved by breaking down data to smaller packets at the channel level (See AggregatingTeleportChannel, not yet tested)
+
+##### 6. Actual data (Variable, according to value of Data Length)
+This is the actual data of the packet. If the CRC mismatches we will dispose the data altogether
 
 ### Illustration of the header structure
 ```
