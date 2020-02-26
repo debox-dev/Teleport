@@ -183,7 +183,7 @@ For example - If a packet arrived with a header error, there is no way to know w
 This is the channel id of the packet. Each channel may process the packet data differently so it is important for the system to know which channel should handle this packet
 
 ##### 3. Data CRC (4 bits)
-This is the CRC of the data. Teleport sums up the bytes of the data, modded by the number 4 - resulting in a 4 bit number.
+This is the CRC of the data. Teleport sums up the bytes of the data, modded by the number 15 (0b1111) - resulting in a 4 bit number.
 
 ##### 4. Header CRC (4 bits) 
 The header of the packet is critical as it tells the system how long the packet is. If the packet header is damaged, Teleport may try to read an infinetly long packet.
