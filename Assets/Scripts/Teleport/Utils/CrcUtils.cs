@@ -11,10 +11,6 @@
                 {
                     checksumCalculated += data[i];
                 }
-                /*for (long i = 0; i < additional.Length; i++)
-                {
-                    checksumCalculated += additional[i];
-                }*/
             }
             return (byte)(checksumCalculated % maxChecksum);
         }

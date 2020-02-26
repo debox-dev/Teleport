@@ -10,6 +10,9 @@ namespace DeBox.Teleport.Core
     {
         private const byte HEADER_LENGTH = 4;
         private const byte FIXED_PACKET_PREFIX = 3;
+        private const byte HEADER_CRC_SIZE = 0b1111;
+        private const byte DATA_CRC_SIZE = 0b1111;
+        private const byte TWO_BITS_MASK = 0b11;
         private byte[] _buffer = new byte[8096];
         private int _bufferLength = 0;
 
@@ -70,7 +73,7 @@ namespace DeBox.Teleport.Core
                 return 0;
             }
             var dataLengthBytes = BitConverter.GetBytes(dataLength);
-            var actualHeaderCrc = CrcUtils.Checksum(new byte[] { channelId, dataLengthBytes[0], dataLengthBytes[1] }, 0, 3, 256);
+            var actualHeaderCrc = CrcUtils.Checksum(new byte[] { channelId, dataLengthBytes[0], dataLengthBytes[1] }, 0, 3, HEADER_CRC_SIZE);
             if (actualHeaderCrc != headerCrc)
             {
                 Debug.LogError("header crc check failed");
@@ -110,15 +113,15 @@ namespace DeBox.Teleport.Core
 
         private bool DoesLookLikeStartOfPacket(byte[] data, int position)
         {
-            var prefix = ReadBits(data[position], 6, 0b11);
+            var prefix = ReadBits(data[position], 6, TWO_BITS_MASK);
             return prefix == FIXED_PACKET_PREFIX;
         }
 
         private bool ParseHeader(byte[] data, int position, out byte crc, out byte headerCrc, out byte channelId, out ushort length, out byte headerLength)
         {
-            crc = ReadBits(data[position], 0, 0b11);
-            channelId = ReadBits(data[position], 2, 0b11);
-            var prefix = ReadBits(data[position], 6, 0b11);
+            crc = ReadBits(data[position], 0, DATA_CRC_SIZE);
+            channelId = ReadBits(data[position], 4, TWO_BITS_MASK);
+            var prefix = ReadBits(data[position], 6, TWO_BITS_MASK);
             length = BitConverter.ToUInt16(data, position + 1);
             headerCrc = data[position + 3];
             headerLength = HEADER_LENGTH;
@@ -131,7 +134,7 @@ namespace DeBox.Teleport.Core
 
         private bool ValidateCrc(byte crc, byte[] data, byte position, ushort length)
         {
-            var dataCrc = CrcUtils.Checksum(data, position, length, 4);
+            var dataCrc = CrcUtils.Checksum(data, position, length, DATA_CRC_SIZE);
             return dataCrc == crc;
         }
 
@@ -139,10 +142,10 @@ namespace DeBox.Teleport.Core
         {
             var random = new System.Random();
             var lengthBytes = BitConverter.GetBytes(length);
-            var crc = CrcUtils.Checksum(data, startPosition, length, 4);
-            var headerCrc = CrcUtils.Checksum(new byte[] { channelId, lengthBytes[0], lengthBytes[1] }, 0, 3, 256);
+            var crc = CrcUtils.Checksum(data, startPosition, length, DATA_CRC_SIZE);
+            var headerCrc = CrcUtils.Checksum(new byte[] { channelId, lengthBytes[0], lengthBytes[1] }, 0, 3, HEADER_CRC_SIZE);
             outHeader[0] = crc;
-            outHeader[0] |= (byte)(channelId << 2);
+            outHeader[0] |= (byte)(channelId << 4);
             outHeader[0] |= (byte)(FIXED_PACKET_PREFIX << 6);            
             outHeader[1] = lengthBytes[0];
             outHeader[2] = lengthBytes[1];
