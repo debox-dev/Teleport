@@ -8,11 +8,13 @@ namespace DeBox.Teleport.Core
 {
     public class TeleportPacketBuffer : ITeleportPacketBuffer
     {
-        private const byte HEADER_LENGTH = 4;
+        private const byte HEADER_LENGTH = 3;
         private const byte FIXED_PACKET_PREFIX = 3;
         private const byte HEADER_CRC_SIZE = 0b1111;
         private const byte DATA_CRC_SIZE = 0b1111;
         private const byte TWO_BITS_MASK = 0b11;
+        private const byte FOUR_BITS_MASK = 0b1111;
+        private const byte FULL_BYTE_MASK = 0xFF;
         private byte[] _buffer = new byte[8096];
         private int _bufferLength = 0;
 
@@ -122,8 +124,8 @@ namespace DeBox.Teleport.Core
             crc = ReadBits(data[position], 0, DATA_CRC_SIZE);
             channelId = ReadBits(data[position], 4, TWO_BITS_MASK);
             var prefix = ReadBits(data[position], 6, TWO_BITS_MASK);
-            length = BitConverter.ToUInt16(data, position + 1);
-            headerCrc = data[position + 3];
+            length = (ushort)(((data[position + 1] & FOUR_BITS_MASK) << 8) + data[position + 2]);
+            headerCrc = ReadBits(data[position + 1], 4, HEADER_CRC_SIZE);
             headerLength = HEADER_LENGTH;
             if (prefix != FIXED_PACKET_PREFIX)
             {
@@ -138,8 +140,59 @@ namespace DeBox.Teleport.Core
             return dataCrc == crc;
         }
 
+        /// <summary>
+        /// Header structure:
+        /// ========================================
+        /// 1. Fixed packet prefix (2 bits)
+        /// 2. Channel Id (2 bits)
+        /// 3. Data CRC (4 bits)
+        /// 4. Header CRC (4 bits) 
+        /// 5. Data Length (12 bits, trimmed ushort, max=4096)
+        /// 
+        /// Illustrated header structure
+        /// ========================================
+        /// BYTE 1  +-+[] FIXED PACKET PREFIX (2 bits)
+        ///         |  []
+        ///         |
+        ///         |  [] CHANNEL ID (2 bits)
+        ///         |  []
+        ///         |
+        ///         |  [] DATA CRC (4 bits)
+        ///         |  []
+        ///         |  []
+        ///         +-+[]
+        ///
+        /// BYTE 2  +-+[] HEADER CRC (4 bits)
+        ///         |  []
+        ///         |  []
+        ///         |  []
+        ///         |
+        ///         |  [] DATA LENGTH (12 bits)
+        ///         |  []
+        ///         |  []
+        ///         +-+[]
+        /// BYTE 3  +-+[]
+        ///         |  []
+        ///         |  []
+        ///         |  []
+        ///         |  []
+        ///         |  []
+        ///         |  []
+        ///         +-+[]
+        /// 
+        /// </summary>
+        /// <param name="outHeader">byte[] buffer to write the header into</param>
+        /// <param name="channelId">Channel ID to embed into the header</param>
+        /// <param name="data">Data of the packet, given for calculating the data CRC</param>
+        /// <param name="startPosition">Start position of the data in the given Data buffer</param>
+        /// <param name="length">Length of the data in the given data buffer</param>
+        /// <returns>The length of the header in bytes</returns>
         private byte CreateHeader(byte[] outHeader, byte channelId, byte[] data, int startPosition, ushort length)
         {
+            if (length > 4096)
+            {
+                throw new Exception("Maximum data length is 4096 bytes! Got " + length);
+            }
             var random = new System.Random();
             var lengthBytes = BitConverter.GetBytes(length);
             var crc = CrcUtils.Checksum(data, startPosition, length, DATA_CRC_SIZE);
@@ -147,9 +200,9 @@ namespace DeBox.Teleport.Core
             outHeader[0] = crc;
             outHeader[0] |= (byte)(channelId << 4);
             outHeader[0] |= (byte)(FIXED_PACKET_PREFIX << 6);            
-            outHeader[1] = lengthBytes[0];
-            outHeader[2] = lengthBytes[1];
-            outHeader[3] = headerCrc;
+            outHeader[1] = (byte)(length >> 8 & FOUR_BITS_MASK);
+            outHeader[2] = (byte)(length & FULL_BYTE_MASK);
+            outHeader[1] |= (byte)(headerCrc << 4);
             return HEADER_LENGTH;
         }
     
