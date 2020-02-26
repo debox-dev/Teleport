@@ -170,3 +170,46 @@ TeleportManager.Main.SendToAllExcept(new MyMessage(Vector3.one), channelId: 0, c
 ```
 TeleportManager.Main.SendToServer(new MyMessage(Vector3.one), channelId: 0);
 ```
+
+## Packet structure
+#### Packet structure overview
+1. Fixed packet prefix (2 bits)
+2. Channel Id (2 bits)
+3. Data CRC (4 bits)
+4. Header CRC (4 bits) 
+5. Data Length (12 bits, trimmed ushort, max=4096)
+6. Actual data (Variable, according to value of Data Length)
+
+### Illustration of the header structure
+```
+BYTE 1  +-+[] FIXED PACKET PREFIX (2 bits)
+        |  []
+        |
+        |  [] CHANNEL ID (2 bits)
+        |  []
+        |
+        |  [] DATA CRC (4 bits)
+        |  []
+        |  []
+        +-+[]
+
+BYTE 2  +-+[] HEADER CRC (4 bits)
+        |  []
+        |  []
+        |  []
+        |
+        |  [] DATA LENGTH (12 bits)
+        |  []
+        |  []
+        +-+[]
+BYTE 3  +-+[]
+        |  []
+        |  []
+        |  []
+        |  []
+        |  []
+        |  []
+        +-+[]
+```
+
+
