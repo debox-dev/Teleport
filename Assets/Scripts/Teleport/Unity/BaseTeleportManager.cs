@@ -71,10 +71,12 @@ namespace DeBox.Teleport.Unity
             _server.ClientDisconnected -= ServerSideOnClientDisconnected;
             _server.MessageArrived -= ServerSideOnMessageArrived;
             _server.ServerBecameOnline -= ServerStarted;
+            _server.UnregisterAllMessages();
             if (_server.IsListening)
             {
                 _server.StopListening();
             }
+            ServerStopped();
             _server = null;
         }
 
@@ -97,6 +99,7 @@ namespace DeBox.Teleport.Unity
             {
                 _client.Disconnect();
             }
+            _client.UnregisterAllMessages();
             _client = null;    
         }
 
@@ -128,6 +131,7 @@ namespace DeBox.Teleport.Unity
         protected abstract TeleportChannelType[] GetChannelTypes();
 
         public abstract void ServerStarted();
+        public abstract void ServerStopped();
         public abstract void ServerSideOnClientConnected(uint clientId, EndPoint endpoint);
         public abstract void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason);
         public abstract void ServerSideOnMessageArrived(uint clientId, EndPoint endpoint, ITeleportMessage message);
@@ -169,6 +173,9 @@ namespace DeBox.Teleport.Unity
             UnregisterClientMessage<T>();
             UnregisterServerMessage<T>();
         }
+
+        public void UnregisterAllServerMessages() { _server.UnregisterAllMessages();  }
+        public void UnregisterAllClientMessages() { _client.UnregisterAllMessages(); }
 
         private void RegisterMessage<T>(BaseTeleportProcessor processor) where T : ITeleportMessage, new()
         {

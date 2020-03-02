@@ -197,6 +197,9 @@ namespace DeBox.Teleport.Unity
 
         public override void ServerStarted() {}
 
+        public override void ServerStopped() {}
+        
+
         public override void ServerSidePrestart()
         {
         }
@@ -207,5 +210,6 @@ namespace DeBox.Teleport.Unity
             RegisterClientMessage<TeleportDespawnMessage>();
             RegisterClientMessage<TeleportStateSyncMessage>();
         }
+
     }
 }
