@@ -81,6 +81,10 @@ namespace DeBox.Teleport
             {
                 processor = ProcessIncomingMessage<T>;
             }
+            if (_incomingMessageProcessors.ContainsKey(msgTypeId))
+            {
+                throw new Exception("Msg type " + msgTypeId + " is already registered");
+            }
             _incomingMessageProcessors[msgTypeId] = processor;
             return msgTypeId;
         }
@@ -88,6 +92,11 @@ namespace DeBox.Teleport
         public void UnregisterMessage(byte msgTypeId)
         {
             _incomingMessageProcessors.Remove(msgTypeId);
+        }
+
+        public void UnregisterAllMessages()
+        {
+            _incomingMessageProcessors.Clear();
         }
 
         public void UnregisterMessage<T>() where T : ITeleportMessage, new()
