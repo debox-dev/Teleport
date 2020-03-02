@@ -23,6 +23,8 @@ namespace DeBox.Teleport.Core
             public int port;
         }
 
+        private const int THREAD_SLEEP_DURATION = 10;
+
         private Thread _thread;
         private bool _stopRequested;
         private Func<BaseTeleportChannel>[] _channelCreators;
@@ -127,8 +129,8 @@ namespace DeBox.Teleport.Core
             while (!_stopRequested)
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
-                
 
+                Thread.Sleep(THREAD_SLEEP_DURATION);
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.ReceiveFrom(data, ref endpoint);
@@ -218,10 +220,9 @@ namespace DeBox.Teleport.Core
             _endpointCollection = new EndpointCollection(_endpointTimeout, _channelCreators, _bufferCreator);
             
             var clientParams = (ClientParams)clientParamsObj;
-            var udpClient = new UdpClient();
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             var endpoint = new IPEndPoint(clientParams.address, clientParams.port);
-            byte[] data;
+            byte[] data = new byte[8096];
             byte[] packetData = new byte[8096];
             int packetLength;
             ITeleportPacketBuffer packetBuffer;
@@ -236,8 +237,8 @@ namespace DeBox.Teleport.Core
             while (!_stopRequested)
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
-                data = new byte[8096];
-
+               
+                Thread.Sleep(THREAD_SLEEP_DURATION);
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.Receive(data);
