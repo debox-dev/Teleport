@@ -10,10 +10,27 @@ namespace DeBox.Teleport
 
         public abstract byte MsgTypeId { get; }
 
+        public virtual byte GetChannelId()
+        {
+            return 0;
+        }
+
+        public virtual SerializationTargetType GetSerializationType()
+        {
+            return SerializationTargetType.Everyone;
+        }
+
+
         public virtual void SerializeWithId(TeleportWriter writer)
         {
             writer.Write(MsgTypeId);
             Serialize(writer);
+        }
+
+
+        public virtual bool SerializeForClient(TeleportWriter writer, uint clientId)
+        {
+            throw new System.NotImplementedException();
         }
 
         public virtual void Deserialize(TeleportReader reader)
@@ -32,5 +49,7 @@ namespace DeBox.Teleport
         public virtual void OnArrivalToClient() { }
         public virtual void PostSendClient() { }
         public virtual void PostSendServer() { }
+
+
     }
 }

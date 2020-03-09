@@ -63,10 +63,6 @@ namespace DeBox.Teleport
             }            
         }
 
-        protected void Send<T>(T message, byte channelId = 0) where T : ITeleportMessage
-        {
-            Send(message.SerializeWithId);
-        }
 
         public void HandleIncoming()
         {
@@ -123,6 +119,11 @@ namespace DeBox.Teleport
         }
 
         protected abstract void HandleIncomingMessage(EndPoint sender, TeleportReader reader);
+
+        protected void Send<T>(T message, byte channelId = 0) where T : ITeleportMessage
+        {
+            Send(message.SerializeWithId);
+        }
 
         protected void SendToEndpoints(Action<TeleportWriter> serializer, byte channelId = 0, params EndPoint[] endpoints)
         {

@@ -205,7 +205,7 @@ namespace DeBox.Teleport.Unity
         {
             var states = GetCurrentStates();
             var message = new TeleportStateSyncMessage(SpawnId, states);
-            TeleportManager.Main.SendToAllClients(message);
+            TeleportManager.Main.SendToClients(message);
         }
 
         public ICollection<GameObject> GetInstances()

@@ -117,7 +117,7 @@ namespace DeBox.Teleport.Unity
 					return _serverSpawners[i];
 				}
 			}
-			throw new System.Exception("No TeleportObjectSpawner for prefab " + prefab.name);
+			throw new Exception("No TeleportObjectSpawner for prefab " + prefab.name);
 		}
 
         public ITeleportObjectSpawner GetServerSpawnerForInstance(GameObject instance)
@@ -139,14 +139,14 @@ namespace DeBox.Teleport.Unity
                     return spawners[i];
                 }
             }
-            throw new System.Exception("No TeleportObjectSpawner for prefab " + instance.name);
+            throw new Exception("No TeleportObjectSpawner for prefab " + instance.name);
         }
 
         public GameObject ServerSideSpawn(GameObject prefab, Vector3 position, object instanceConfig, byte channelId = 0)
         {
             var spawner = GetServerSpawnerForPrefab(prefab);
             var message = new TeleportSpawnMessage(spawner, position, instanceConfig);
-            SendToAllClients(message, channelId);
+            SendToClients(message);
             return message.SpawnedObject;
         }
 
@@ -155,7 +155,7 @@ namespace DeBox.Teleport.Unity
             var spawner = GetServerSpawnerForInstance(instance);
             var instanceId = spawner.GetInstanceId(instance);
             var message = new TeleportDespawnMessage(spawner, instanceId);
-            SendToAllClients(message, channelId);
+            SendToClients(message, channelId);
         }
 
         private GameObject ServerSideSpawnRetroactiveForClient(uint clientId, GameObject instance, byte channelId = 0)

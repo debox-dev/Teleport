@@ -128,8 +128,8 @@ namespace DeBox.Teleport.Tests
             {
                 for (int i = 0; i < 5; i++)
                 {
-                    server.SendToAll(new TimedMessageTest());
-                    server.SendToAll(new TestMessage());
+                    server.SendMessage(new TimedMessageTest());
+                    server.SendMessage(new TestMessage());
 
                 }
 

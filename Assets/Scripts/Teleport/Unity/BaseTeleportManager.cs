@@ -103,6 +103,11 @@ namespace DeBox.Teleport.Unity
             _client = null;    
         }
 
+        public void SendToClients(ITeleportMessage message)
+        {
+            _server.SendMessage(message);
+        }
+
         public void SendToAllClients(ITeleportMessage message, byte channelId = 0)
         {
             _server.SendToAll(message, channelId);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using DeBox.Teleport.Core;
@@ -53,11 +54,48 @@ namespace DeBox.Teleport
             _transport.StopListener();
         }
 
-        public void SendToAll<T>(T message, byte channelId = 0) where T : ITeleportMessage
+        public void SendMessage<T>(T message) where T : ITeleportMessage
         {
             StampMessageIfTimed(message);
             message.PreSendServer();
-            Send(message, channelId);
+            switch (message.GetSerializationType())
+            {
+                case SerializationTargetType.Everyone:
+                    Send(message, message.GetChannelId());
+                    break;
+                case SerializationTargetType.NoOne:
+                    break;
+                case SerializationTargetType.PerConnection:
+                    EndPoint endpoint;
+                    MemoryStream stream;
+                    bool shouldSend;
+                    foreach (var pair in _clientDataById)
+                    {
+                        endpoint = pair.Value.endpoint;
+                        using (stream = new MemoryStream())
+                        {
+                            using (var writer = new TeleportWriter(stream))
+                            {
+                                shouldSend = message.SerializeForClient(writer, pair.Key);
+                            }
+                            if (shouldSend)
+                            {
+                                _transport.Send(stream.ToArray(), message.GetChannelId(), endpoint);
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    throw new Exception("Unknown SerializationTargetType: " + message.GetSerializationType());
+            } 
+            message.PostSendServer();
+        }
+
+        public void SendToAll<T>(T message, byte channelId = 0) where T : ITeleportMessage
+        {
+            message.PreSendServer();
+            StampMessageIfTimed(message);
+            Send(message, message.GetChannelId());
             message.PostSendServer();
         }
 
