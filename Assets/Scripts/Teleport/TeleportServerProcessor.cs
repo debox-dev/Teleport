@@ -22,6 +22,7 @@ namespace DeBox.Teleport
             public bool isAuthenticated;
             public uint clientId;
             public byte authKey;
+            public bool isReady;
         }
 
         public event Action<uint, EndPoint> ClientConnected;
@@ -270,7 +271,6 @@ namespace DeBox.Teleport
                     w.Write(authKey);
                     w.Write(clientId);
                 });
-                OnClientConnected(clientId, sender);
             }
             else
             {
@@ -311,6 +311,16 @@ namespace DeBox.Teleport
                     break;
                 case TeleportMsgTypeIds.TimeSync:
                     ReplyToTimeSyncRequest(sender, reader);
+                    break;
+                case TeleportMsgTypeIds.ClientReady:
+                    clientData = GetClientData(sender);
+                    if (clientData.isReady)
+                    {
+                        UnityEngine.Debug.LogError("Client notified ready twice: " + sender.ToString());
+                        break;
+                    }
+                    clientData.isReady = true;
+                    OnClientConnected(clientData.clientId, sender);
                     break;
                 default:
                     ProcessMessage(sender, msgTypeId, reader);

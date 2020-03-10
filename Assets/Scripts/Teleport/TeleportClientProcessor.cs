@@ -194,6 +194,14 @@ namespace DeBox.Teleport
             });
         }
 
+        private void SendClientReady()
+        {
+            Send(w =>
+            {
+                w.Write(TeleportMsgTypeIds.ClientReady);
+            });
+        }
+
         protected override void HandleIncomingMessage(EndPoint sender, TeleportReader reader)
         {
             var msgTypeId = reader.ReadByte();
@@ -217,6 +225,7 @@ namespace DeBox.Teleport
 
         private void HandleTimeSyncReponse(TeleportReader reader)
         {
+            bool shouldNotifyReady = !IsTimeSynchronized;
             var clientTimeOnRequestSent = reader.ReadSingle();
             var serverTimeOnRequestArrival = reader.ReadSingle();
             var clientTimeOnResponseArrival = LocalTime;
@@ -235,6 +244,10 @@ namespace DeBox.Teleport
             else
             {
                 ServerTime += Math.Max(absDelta, TIME_SYNC_MAX_TIME_DRIFT_MAGNITUDE) * deltaSign;
+            }
+            if (shouldNotifyReady)
+            {
+                SendClientReady();
             }
         }
     }
