@@ -204,7 +204,7 @@ MonoBehaviour:
     type: 3}
   _spawnedObjectCount: 20
   _spawnDuration: 20
-  _despawnAfter: 10
+  _despawnAfter: 3
 --- !u!4 &1302919527
 Transform:
   m_ObjectHideFlags: 0
