@@ -6,6 +6,8 @@ namespace DeBox.Teleport.Core
 {
     public class SequencedTeleportChannel : BaseTeleportProxyChannel
     {
+        private const int ACK_TIMEOUT_DURATION_IN_TICKS = 50000000;
+
         private class OutboxItem
         {
             public byte[] data;
@@ -68,7 +70,6 @@ namespace DeBox.Teleport.Core
             {
                 Debug.LogWarning("Got same sequence twice: " + sequenceNumber);
             }
-            //Debug.LogError("Add to inbox: " + Debugging.TeleportDebugUtils.DebugString(data, startIndex + processedLength, length - processedLength));
             _inbox[sequenceNumber] = new InboxItem() { data = data, startIndex = startIndex + processedLength, length = length - processedLength };
             if (sequenceNumber > _lastReceiveIndex)
             {
@@ -122,7 +123,6 @@ namespace DeBox.Teleport.Core
                 }
             }
             _outgoingSequence++;
-            //UnityEngine.Debug.LogError("Prepare: " + GetType().ToString() + ": " + DeBox.Teleport.Debugging.TeleportDebugUtils.DebugString(newData));
             return newData;
         }
 
@@ -140,7 +140,7 @@ namespace DeBox.Teleport.Core
                 {
                     seqId = p.Key;
                     outboxItem = p.Value;
-                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 50000000)                    
+                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - ACK_TIMEOUT_DURATION_IN_TICKS)                    
                     {
                         outboxItem.lastSendTime = DateTime.UtcNow.Ticks;
                         InternalChannel.Send(outboxItem.data);

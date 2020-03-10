@@ -114,8 +114,6 @@ namespace DeBox.Teleport.Core
             IPEndPoint ip = new IPEndPoint(IPAddress.Any, port);
 
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 0);
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendLowWater, 1);
             socket.Bind(ip);
 
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
