@@ -300,6 +300,14 @@ Rotation = reader.ReadQuaternion(FloatCompressionTypeShort.Short_Two_Decimals);
 ## Per-client message serialization
 You may serialize a message personally for each client
 
+1. Override GetDeliveryTarget
+1.1. return DeliveryTargetType.PerConnection
+2. Override SerializeForClient
+2.1. Make sure to return true for clients that should receive this message
+2.2. Make sure to return false for clients that should not receive this message
+3. Optionally override PreSendServerForClient
+3.1. Make sure to return true for clients that should receive this message
+3.2. Make sure to return false for clients that should not receive this message
 ```
 public class MyMessage : BaseTeleportMessage
 {
