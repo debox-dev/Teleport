@@ -269,13 +269,13 @@ Maximum Value: 32.767
 ### Char compression
 Use char compression for really really small floats in order to trim 4 bytes to 1 byte
 
-#### Char_One_Decimal
+#### FloatCompressionTypeChar.Char_One_Decimal
 ```FloatCompressionTypeChar.Char_One_Decimal``` 
 
 Minimum Value: -12.7
 Maximum Value: 12.8
 
-#### Char_Two_Decimals
+#### FloatCompressionTypeChar.Char_Two_Decimals
 ```FloatCompressionTypeChar.Char_Two_Decimals``` 
 
 Good for Vectors that have at most the magnitude of 1; for example directions.
