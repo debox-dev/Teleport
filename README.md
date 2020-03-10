@@ -297,3 +297,50 @@ Rotation = reader.ReadQuaternion(FloatCompressionTypeShort.Short_Two_Decimals);
 ```
 
 
+## Per-client message serialization
+You may serialize a message personally for each client
+
+```
+public class MyMessage : BaseTeleportMessage
+{
+    public Vector3 Position { get; private set; }
+    public override byte MsgTypeId { get { return TeleportMsgTypeIds.Highest + 1; } }
+
+    // Deserialization constructor
+    public MyMessage() {}
+
+    // Actual constructor
+    public MyMessage(Vector3 position)
+    {
+        Position = position;
+    }
+
+	public override DeliveryTargetType GetDeliveryTarget()
+	{
+		return DeliveryTargetType.PerConnection;
+	}
+
+	// We don't have to implement Serialize now that we are PerConnection
+    public override void Serialize(DeBox.Teleport.Core.TeleportWriter writer)
+    {
+		throw new Exception("Don't expect this to be called!");
+    }
+
+	public override bool SerializeForClient(TeleportWriter writer, uint clientId)
+	{
+		// Only the second client
+		if (GameUtils.CanPlayerSeeObjects(clientId))
+		{
+			writer.Write(Position);
+			return true;
+		}
+		return false;
+	}
+
+	public override void Deserialize(TeleportReader reader)
+	{
+		Position = reader.ReadVector3();
+	}
+}
+```
+
