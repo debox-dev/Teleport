@@ -17,6 +17,11 @@ namespace DeBox.Teleport.Unity
 
         public TeleportDespawnMessage() { }
 
+        public override DeliveryTargetType GetDeliveryTarget()
+        {
+            return DeliveryTargetType.PerConnection;
+        }
+
         public TeleportDespawnMessage(ITeleportObjectSpawner spawner, ushort instanceId)
         {
             _spawner = spawner;
@@ -44,15 +49,27 @@ namespace DeBox.Teleport.Unity
             _reader = new TeleportReader(data);
         }
 
-        public override void Serialize(TeleportWriter writer)
+        public override bool SerializeForClient(TeleportWriter writer, uint clientId)
         {
+            if (!_spawner.IsSpawnedForClient(_instanceId, clientId))
+            {
+                return false;
+            }
             base.Serialize(writer);
             writer.Write(_spawner.SpawnId);
             writer.Write(_instanceId);
             var despawned = _spawner.GetInstanceById(_instanceId);
             _spawner.OnServerDespawn(writer, despawned);
+            return true;
+        }
+
+        public override void PostSendServer()
+        {
+            base.PostSendServer();
+            var despawned = _spawner.GetInstanceById(_instanceId);
             _spawner.DestroyInstance(despawned);
         }
+
 
         public void SetTimestamp(float timestamp)
         {
