@@ -10,8 +10,11 @@ namespace DeBox.Teleport.Unity
         ushort InstanceId { get; }
         void ApplyImmediate(GameObject instance);
         void FromInstance(GameObject instance);
+        DeliveryTargetType GetDeliveryTarget();
         ITeleportState Interpolate(ITeleportState other, float progress01);
+        bool ShouldSpawnForConnection(uint connectionId);
         void Serialize(TeleportWriter writer);
+        bool SerializeForConnection(TeleportWriter writer, uint connectionId);
         void Deserialize(TeleportReader reader);
     }
 
@@ -23,6 +26,11 @@ namespace DeBox.Teleport.Unity
 
         public TeleportTransformState() { }
         public TeleportTransformState(ushort instanceId) { InstanceId = instanceId; }
+
+        public virtual DeliveryTargetType GetDeliveryTarget()
+        {
+            return DeliveryTargetType.Everyone;
+        }
 
         public void FromInstance(GameObject instance)
         {
@@ -60,6 +68,17 @@ namespace DeBox.Teleport.Unity
             newState.Rotation = Quaternion.Lerp(Rotation, otherState.Rotation, progress01);
             return newState;
         }
+
+        public virtual bool SerializeForConnection(TeleportWriter writer, uint connectionId)
+        {
+            Serialize(writer);
+            return true;
+        }
+
+        public virtual bool ShouldSpawnForConnection(uint connectionId)
+        {
+            return true;
+        }
     }
 
     public enum TeleportObjectSpawnerType
@@ -82,8 +101,8 @@ namespace DeBox.Teleport.Unity
         void DestroySelf();
         void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned);
         void OnClientDespawn(TeleportReader reader, GameObject despawned);
-        void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned);
-        void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object objectConfig);
+        void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object instanceConfig);
+        GameObject SpawnOnServer(Vector3 position);
         void OnServerDespawn(TeleportWriter writer, GameObject despawned);
         GameObject GetInstanceById(ushort instanceId);
         ushort GetInstanceId(GameObject instance);
@@ -93,5 +112,8 @@ namespace DeBox.Teleport.Unity
         ITeleportState GenerateEmptyState();
         object GetConfigForLiveInstance(GameObject instance);
         ICollection<GameObject> GetInstances();
+        bool IsSpawnedForClient(ushort instanceId, uint clientId);
+        void SpawnForClient(ushort instanceId, uint clientId);
+        void SendStatesToClient(uint clientId);
     }
 }

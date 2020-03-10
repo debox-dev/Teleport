@@ -13,7 +13,7 @@ namespace DeBox.Teleport.Unity
         private GameObject _clientPrefab = null;
 
         [SerializeField]
-        private bool _syncTransform = true;
+        private bool _syncState = true;
 
         [SerializeField]
         private float _stateUpdateRateInSeconds = 0.1f;
@@ -21,13 +21,14 @@ namespace DeBox.Teleport.Unity
         private ushort _instanceIdSequence = 0;
         private Dictionary<ushort, GameObject> _instanceByInstanceId = new Dictionary<ushort, GameObject>();
         private Dictionary<GameObject, ushort> _instanceIdByInstance = new Dictionary<GameObject, ushort>();
+        private Dictionary<ushort, HashSet<uint>> _instanceIdClientIdSpawnMap = new Dictionary<ushort, HashSet<uint>>();
         private float _nextSendStateTime = 0;
         private TeleportStateQueue _stateQueue = new TeleportStateQueue();
         private TeleportObjectSpawnerType _spawnerType;
 
         public ushort SpawnId { get; private set; }
 
-        public bool ShouldSyncState => _syncTransform;
+        public bool ShouldSyncState => _syncState;
 
         public bool IsManagedPrefab(GameObject prefab)
         {
@@ -41,7 +42,7 @@ namespace DeBox.Teleport.Unity
 
         public ushort GetNextInstanceId() { return _instanceIdSequence++; }
 
-        public GameObject CreateInstance()
+        public virtual GameObject CreateInstance()
         {
             if (_serverPrefab == null)
             {
@@ -87,7 +88,43 @@ namespace DeBox.Teleport.Unity
 
         }
 
+        public bool IsSpawnedForClient(ushort instanceId, uint clientId)
+        {
+            HashSet<uint> clientIdMap;
+            if (_instanceIdClientIdSpawnMap.TryGetValue(instanceId, out clientIdMap))
+            {
+                return clientIdMap.Contains(clientId);
+            }
+            return false;
+        }
 
+        public void SpawnForClient(ushort instanceId, uint clientId)
+        {
+            var instance = _instanceByInstanceId[instanceId];
+            var instanceConfig = GetConfigForLiveInstance(instance);
+            var message = new TeleportSpawnMessage(this, instance, instanceConfig);
+            MarkInstanceAsSpawnedForClient(instanceId, clientId);
+            TeleportManager.Main.SendToClient(clientId, message);
+        }
+
+        private void MarkInstanceAsSpawnedForClient(ushort instanceId, uint clientId)
+        {
+            HashSet<uint> clientIdMap;
+            if (!_instanceIdClientIdSpawnMap.TryGetValue(instanceId, out clientIdMap))
+            {
+                clientIdMap = new HashSet<uint>();
+                _instanceIdClientIdSpawnMap[instanceId] = clientIdMap;
+            }
+            else
+            {
+                if (clientIdMap.Contains(clientId))
+                {
+                    throw new System.Exception("Already marked as spawned");
+                }
+            }
+            clientIdMap.Add(clientId);
+        }
+        
         public void OnServerDespawn(TeleportWriter reader, GameObject despawned)
         {
             var instanceId = _instanceIdByInstance[despawned];
@@ -95,11 +132,14 @@ namespace DeBox.Teleport.Unity
             _instanceByInstanceId.Remove(instanceId);
         }
 
-
-        public void OnServerSpawn(ushort instanceId, TeleportWriter writer, GameObject spawned)
+        public GameObject SpawnOnServer(Vector3 position)
         {
+            var spawned = CreateInstance();
+            var instanceId = GetNextInstanceId();
+            spawned.transform.position = position;
             _instanceIdByInstance[spawned] = instanceId;
             _instanceByInstanceId[instanceId] = spawned;
+            return spawned;
         }
 
         public virtual void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object instanceConfig)
@@ -160,7 +200,7 @@ namespace DeBox.Teleport.Unity
 
         protected virtual void FixedUpdate()
         {
-            if (_syncTransform)
+            if (ShouldSyncState)
             {
                 if (TeleportManager.Main.IsServerListening && _spawnerType == TeleportObjectSpawnerType.ServerSide)
                 {
@@ -170,30 +210,21 @@ namespace DeBox.Teleport.Unity
                         SendStatesToClients();
                     }
                 }
-                if (TeleportManager.Main.ClientState == TeleportClientProcessor.StateType.Connected && _spawnerType == TeleportObjectSpawnerType.ClientSide)
+            }
+            if (TeleportManager.Main.ClientState == TeleportClientProcessor.StateType.Connected && _spawnerType == TeleportObjectSpawnerType.ClientSide)
+            {
+                var timestamp = TeleportManager.Main.ClientSideServerTime - TeleportManager.Main.PlaybackDelay;
+                var states = _stateQueue.GetInterpolatedStates(timestamp);
+                ITeleportState state;
+                for (int i = 0; i < states.Length; i++)
                 {
-                    var timestamp = TeleportManager.Main.ClientSideServerTime - TeleportManager.Main.PlaybackDelay;
-                    var states = _stateQueue.GetInterpolatedStates(timestamp);
-                    ITeleportState state;
-                    for (int i = 0; i < states.Length; i++)
+                    state = states[i];
+                    if (_instanceByInstanceId.ContainsKey(state.InstanceId))
                     {
-                        state = states[i];
-                        if (_instanceByInstanceId.ContainsKey(state.InstanceId))
-                        {
-                            state.ApplyImmediate(_instanceByInstanceId[state.InstanceId]);
-                        }
+                        state.ApplyImmediate(_instanceByInstanceId[state.InstanceId]);
                     }
                 }
             }
-        }
-
-        private void Update()
-        {
-            if (_syncTransform)
-            {
-                
-            }
-
         }
 
         public ITeleportState GenerateEmptyState()
@@ -201,10 +232,17 @@ namespace DeBox.Teleport.Unity
             return new TeleportTransformState(SpawnId);
         }
 
+        public void SendStatesToClient(uint clientId)
+        {
+            var states = GetCurrentStates();
+            var message = new TeleportStateSyncMessage(this, states);
+            TeleportManager.Main.SendToClients(message);
+        }
+
         protected void SendStatesToClients()
         {
             var states = GetCurrentStates();
-            var message = new TeleportStateSyncMessage(SpawnId, states);
+            var message = new TeleportStateSyncMessage(this, states);
             TeleportManager.Main.SendToClients(message);
         }
 
@@ -212,6 +250,8 @@ namespace DeBox.Teleport.Unity
         {
             return _instanceByInstanceId.Values;
         }
+
+
     }
 
 }

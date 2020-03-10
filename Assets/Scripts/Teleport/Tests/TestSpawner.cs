@@ -14,19 +14,25 @@ namespace DeBox.Teleport.Tests
             public Color Color;
         }
 
+        public override GameObject CreateInstance()
+        {
+            var spawned = base.CreateInstance();
+            ApplyColor(Color.red, spawned);
+            return spawned;
+        }
+
         public override void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object instanceConfig)
         {
             base.ServerSidePreSpawnToClient(writer, spawned, instanceConfig);
             var config = (TestSpawnConfig)instanceConfig;
-            writer.Write(config.Color);
-            ApplyColor(Color.red, spawned);
+            writer.Write(Color.green);
         }
 
         protected override void PostClientSpawn(TeleportReader reader, GameObject spawned)
         {
             base.PostClientSpawn(reader, spawned);
             var color = reader.ReadColor();
-            ApplyColor(Color.green, spawned);
+            ApplyColor(color, spawned);
         }
 
         public override object GetConfigForLiveInstance(GameObject instance)

@@ -15,9 +15,9 @@ namespace DeBox.Teleport
             return 0;
         }
 
-        public virtual SerializationTargetType GetSerializationType()
+        public virtual DeliveryTargetType GetDeliveryTarget()
         {
-            return SerializationTargetType.Everyone;
+            return DeliveryTargetType.Everyone;
         }
 
 
@@ -29,6 +29,11 @@ namespace DeBox.Teleport
 
 
         public virtual bool SerializeForClient(TeleportWriter writer, uint clientId)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public virtual bool PreSendServerForClient(uint clientId)
         {
             throw new System.NotImplementedException();
         }
@@ -49,7 +54,5 @@ namespace DeBox.Teleport
         public virtual void OnArrivalToClient() { }
         public virtual void PostSendClient() { }
         public virtual void PostSendServer() { }
-
-
     }
 }

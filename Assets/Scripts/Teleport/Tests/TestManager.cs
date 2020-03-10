@@ -89,8 +89,7 @@ namespace DeBox.Teleport.Tests
             Debug.Log("Server started, spawning objects...");
             while (spawnCount-- > 0)
             {
-                var config = new TestSpawner.TestSpawnConfig() { Color = Color.red };
-                _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero, config));
+                _spawnedServerInstances.Add(_manager.ServerSideSpawn(_spawnedPrefab, Vector3.zero));
             }
             yield return new WaitForSeconds(2);
             Debug.Log("Waiting for client to connect..");

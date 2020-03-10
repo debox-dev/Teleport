@@ -2,7 +2,7 @@
 
 namespace DeBox.Teleport
 {
-    public enum SerializationTargetType
+    public enum DeliveryTargetType
     {
         NoOne,
         Everyone,
@@ -13,13 +13,14 @@ namespace DeBox.Teleport
     {
         byte MsgTypeId { get; }
         byte GetChannelId();
-        SerializationTargetType GetSerializationType();
+        DeliveryTargetType GetDeliveryTarget();
         void SerializeWithId(TeleportWriter writer);
         void Serialize(TeleportWriter writer);
         bool SerializeForClient(TeleportWriter writer, uint clientId);
         void Deserialize(TeleportReader reader);
         void PreSendClient();
         void PreSendServer();
+        bool PreSendServerForClient(uint clientId);
         void OnArrivalToServer(uint clientId);
         void OnArrivalToClient();
         void PostSendClient();

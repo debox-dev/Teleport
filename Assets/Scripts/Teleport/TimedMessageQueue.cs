@@ -23,7 +23,7 @@ namespace DeBox.Teleport
 
         public void ProcessUntil(float timestamp)
         {
-            ITeleportTimedMessage message;
+            ITeleportTimedMessage message; 
             while (_messageQueue.Count > 0 && _messageQueue.Peek().Timestamp < timestamp)
             {
                 message = _messageQueue.Dequeue();

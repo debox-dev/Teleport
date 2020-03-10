@@ -23,14 +23,6 @@ namespace DeBox.Teleport.Unity
 
         public TeleportSpawnMessage() {}
 
-        public TeleportSpawnMessage(ITeleportObjectSpawner spawner, Vector3 position, object objectConfig)
-        {
-            _objectConfig = objectConfig;
-            _spawner = spawner;
-            Position = position;
-            _instanceId = _spawner.GetNextInstanceId();
-        }
-
         public TeleportSpawnMessage(ITeleportObjectSpawner spawner, GameObject existing, object objectConfig)
         {
             _objectConfig = objectConfig;
@@ -65,21 +57,10 @@ namespace DeBox.Teleport.Unity
 
         public override void Serialize(TeleportWriter writer)
         {
-            bool didExist = true;
-            if (SpawnedObject == null)
-            {
-                didExist = false;
-                SpawnedObject = _spawner.CreateInstance();
-                SpawnedObject.transform.position = Position;
-            }
             base.Serialize(writer);
             writer.Write(_spawner.SpawnId);
             writer.Write(_instanceId);
             writer.Write(Position);
-            if (!didExist)
-            {
-                _spawner.OnServerSpawn(_instanceId, writer, SpawnedObject);
-            }
             _spawner.ServerSidePreSpawnToClient(writer, SpawnedObject, _objectConfig);
         }
 

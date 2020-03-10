@@ -75,6 +75,7 @@ namespace DeBox.Teleport
             }
             if (ServerTime > 0)
             {
+
                 ServerTime += Time.fixedDeltaTime;
                 PlayTimedMessages(ServerTime - _timedMessagePlaybackDelay);
             }            

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Collections.Generic;
 using UnityEngine;
 using DeBox.Teleport.Core;
 
@@ -21,6 +22,19 @@ namespace DeBox.Teleport.Unity
         public float ServerSideTime => _server != null ? _server.LocalTime : 0;
         public float ClientSideServerTime => _client != null ? _client.ServerTime : 0;
         public float ClientSideLocalTime => _client != null ? _client.LocalTime : 0;
+
+        public IEnumerable<uint> ServerSideIterateConnectedClientIds()
+        {
+            if (_server == null || !_server.IsListening)
+            {
+                Debug.LogWarning("Server is not online. Cannot iterate connection Ids");
+                yield break;
+            }
+            foreach (var connId in _server.IterateConnectedClientIds())
+            {
+                yield return connId;
+            }
+        }
 
         private TeleportUdpTransport CreateTransport()
         {

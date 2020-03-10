@@ -42,6 +42,14 @@ namespace DeBox.Teleport
             _clientDataById = new Dictionary<uint, TeleportClientData>();
         }
 
+        public IEnumerable<uint> IterateConnectedClientIds()
+        {
+            foreach (var pair in _clientDataById)
+            {
+                yield return pair.Key;
+            }
+        }
+
         public void Listen(int port)
         {
             StartUnityHelper("Server");
@@ -58,25 +66,27 @@ namespace DeBox.Teleport
         {
             StampMessageIfTimed(message);
             message.PreSendServer();
-            switch (message.GetSerializationType())
+            switch (message.GetDeliveryTarget())
             {
-                case SerializationTargetType.Everyone:
+                case DeliveryTargetType.Everyone:
                     Send(message, message.GetChannelId());
                     break;
-                case SerializationTargetType.NoOne:
+                case DeliveryTargetType.NoOne:
                     break;
-                case SerializationTargetType.PerConnection:
+                case DeliveryTargetType.PerConnection:
                     EndPoint endpoint;
                     MemoryStream stream;
                     bool shouldSend;
                     foreach (var pair in _clientDataById)
                     {
+            
                         endpoint = pair.Value.endpoint;
                         using (stream = new MemoryStream())
                         {
                             using (var writer = new TeleportWriter(stream))
                             {
-                                shouldSend = message.SerializeForClient(writer, pair.Key);
+                                writer.Write(message.MsgTypeId);
+                                shouldSend = message.PreSendServerForClient(pair.Key) && message.SerializeForClient(writer, pair.Key);
                             }
                             if (shouldSend)
                             {
@@ -86,7 +96,7 @@ namespace DeBox.Teleport
                     }
                     break;
                 default:
-                    throw new Exception("Unknown SerializationTargetType: " + message.GetSerializationType());
+                    throw new Exception("Unknown DeliveryTargetType: " + message.GetDeliveryTarget());
             } 
             message.PostSendServer();
         }
