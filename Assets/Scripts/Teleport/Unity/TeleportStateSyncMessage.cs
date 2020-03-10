@@ -74,7 +74,7 @@ namespace DeBox.Teleport.Unity
                 }
                 if (shouldSpawn)
                 {
-                    _spawner.SpawnForClient(currentState.InstanceId, clientId);
+                    _spawner.ServerSideSpawnForClient(currentState.InstanceId, clientId);
                 }
             }
             return shouldSyncToClient;

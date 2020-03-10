@@ -56,7 +56,7 @@ namespace DeBox.Teleport.Unity
             Destroy(instance);
         }
 
-        public void AssignSpawnId(ushort spawnId)
+        public void AssignSpawnerId(ushort spawnId)
         {
             SpawnId = spawnId;
         }
@@ -75,12 +75,14 @@ namespace DeBox.Teleport.Unity
         }
 
 
-        public void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned)
+        public GameObject ClientSideSpawn(ushort instanceId, TeleportReader reader)
         {
+            var spawned = CreateInstance();
             spawned.name = "ClientSpawn_" + spawned.name;
             _instanceIdByInstance[spawned] = instanceId;
             _instanceByInstanceId[instanceId] = spawned;
             PostClientSpawn(reader, spawned);
+            return spawned;
         }
 
         protected virtual void PostClientSpawn(TeleportReader reader, GameObject spawned)
@@ -98,7 +100,7 @@ namespace DeBox.Teleport.Unity
             return false;
         }
 
-        public void SpawnForClient(ushort instanceId, uint clientId)
+        public void ServerSideSpawnForClient(ushort instanceId, uint clientId)
         {
             var instance = _instanceByInstanceId[instanceId];
             var instanceConfig = GetConfigForLiveInstance(instance);

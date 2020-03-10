@@ -92,14 +92,13 @@ namespace DeBox.Teleport.Unity
     {
         ushort SpawnId { get;  }
         bool ShouldSyncState { get; }
-        ushort GetNextInstanceId();
         bool IsManagedPrefab(GameObject prefab);
         bool IsManagedInstance(GameObject instance);
-        void AssignSpawnId(ushort spawnId);
+        void AssignSpawnerId(ushort spawnId);
         GameObject CreateInstance();
         void DestroyInstance(GameObject instance);
         void DestroySelf();
-        void OnClientSpawn(ushort instanceId, TeleportReader reader, GameObject spawned);
+        GameObject ClientSideSpawn(ushort instanceId, TeleportReader reader);
         void OnClientDespawn(TeleportReader reader, GameObject despawned);
         void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object instanceConfig);
         GameObject SpawnOnServer(Vector3 position);
@@ -108,12 +107,10 @@ namespace DeBox.Teleport.Unity
         ushort GetInstanceId(GameObject instance);
         ITeleportObjectSpawner Duplicate(TeleportObjectSpawnerType spawnerType);
         void ReceiveStates(float timestamp, ITeleportState[] instanceStates);
-        ITeleportState[] GetCurrentStates();
         ITeleportState GenerateEmptyState();
-        object GetConfigForLiveInstance(GameObject instance);
         ICollection<GameObject> GetInstances();
         bool IsSpawnedForClient(ushort instanceId, uint clientId);
-        void SpawnForClient(ushort instanceId, uint clientId);
+        void ServerSideSpawnForClient(ushort instanceId, uint clientId);
         void SendStatesToClient(uint clientId);
     }
 }

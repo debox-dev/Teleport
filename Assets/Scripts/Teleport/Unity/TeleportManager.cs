@@ -67,7 +67,7 @@ namespace DeBox.Teleport.Unity
             {
                 return base.GetBufferCreator();
             }
- 	        return () => new TeleportChaoticPacketBuffer(_chaosSettings);
+            return () => new TeleportChaoticPacketBuffer(_chaosSettings);
         }
 
         private void InitSpawners()
@@ -88,8 +88,8 @@ namespace DeBox.Teleport.Unity
                 }
                 var clientSpawner = spawner.Duplicate(TeleportObjectSpawnerType.ClientSide);
                 var serverSpawner = spawner.Duplicate(TeleportObjectSpawnerType.ServerSide);
-                clientSpawner.AssignSpawnId((ushort)i);
-                serverSpawner.AssignSpawnId((ushort)i);
+                clientSpawner.AssignSpawnerId((ushort)i);
+                serverSpawner.AssignSpawnerId((ushort)i);
                 _clientSpawners.Add(clientSpawner);
                 _serverSpawners.Add(serverSpawner);
             }
@@ -98,7 +98,7 @@ namespace DeBox.Teleport.Unity
         public void RegisterSpawner(ITeleportObjectSpawner spawner)
         {
             var spawnerId = (ushort)_clientSpawners.Count;
-            spawner.AssignSpawnId(spawnerId);
+            spawner.AssignSpawnerId(spawnerId);
             _clientSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ClientSide));
             _serverSpawners.Add(spawner.Duplicate(TeleportObjectSpawnerType.ServerSide));
         }
@@ -108,17 +108,17 @@ namespace DeBox.Teleport.Unity
             return _clientSpawners[spawnId];
         }
 
-		public ITeleportObjectSpawner GetServerSpawnerForPrefab(GameObject prefab)
-		{
-			for (int i = 0; i < _serverSpawners.Count; i++)
-			{
-				if (_serverSpawners[i].IsManagedPrefab(prefab))
-				{
-					return _serverSpawners[i];
-				}
-			}
-			throw new Exception("No TeleportObjectSpawner for prefab " + prefab.name);
-		}
+        public ITeleportObjectSpawner GetServerSpawnerForPrefab(GameObject prefab)
+        {
+            for (int i = 0; i < _serverSpawners.Count; i++)
+            {
+                if (_serverSpawners[i].IsManagedPrefab(prefab))
+                {
+                    return _serverSpawners[i];
+                }
+            }
+            throw new Exception("No TeleportObjectSpawner for prefab " + prefab.name);
+        }
 
         public ITeleportObjectSpawner GetServerSpawnerForInstance(GameObject instance)
         {
@@ -156,15 +156,6 @@ namespace DeBox.Teleport.Unity
             SendToClients(message);
         }
 
-        private GameObject ServerSideSpawnRetroactiveForClient(uint clientId, GameObject instance, byte channelId = 0)
-        {
-            var spawner = GetServerSpawnerForInstance(instance);
-            var instanceConfig = spawner.GetConfigForLiveInstance(instance);
-            var message = new TeleportSpawnMessage(spawner, instance, instanceConfig);
-            SendToClient(clientId, message, channelId);
-            return message.SpawnedObject;
-        }
-
         private void SpawnAllInstancesRetroactivelyForClient(uint clientId)
         {
             foreach (var serverSpawner in _serverSpawners)
@@ -175,25 +166,25 @@ namespace DeBox.Teleport.Unity
 
         protected override TeleportChannelType[] GetChannelTypes() { return _channelTypes; }
 
-        public override void ClientSideOnConnected(uint clientId) {}
+        public override void ClientSideOnConnected(uint clientId) { }
 
-        public override void ClientSideOnDisconnected(uint clientId, TeleportClientProcessor.DisconnectReasonType reason) {}
+        public override void ClientSideOnDisconnected(uint clientId, TeleportClientProcessor.DisconnectReasonType reason) { }
 
-        public override void ClientSideOnMessageArrived(ITeleportMessage message) {}
+        public override void ClientSideOnMessageArrived(ITeleportMessage message) { }
 
         public override void ServerSideOnClientConnected(uint clientId, EndPoint endpoint)
         {
             SpawnAllInstancesRetroactivelyForClient(clientId);
         }
 
-        public override void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason) {}
+        public override void ServerSideOnClientDisconnected(uint clientId, TeleportServerProcessor.DisconnectReasonType reason) { }
 
-        public override void ServerSideOnMessageArrived(uint clientId, EndPoint endpoint, ITeleportMessage message) {}
+        public override void ServerSideOnMessageArrived(uint clientId, EndPoint endpoint, ITeleportMessage message) { }
 
-        public override void ServerStarted() {}
+        public override void ServerStarted() { }
 
-        public override void ServerStopped() {}
-        
+        public override void ServerStopped() { }
+
 
         public override void ServerSidePrestart()
         {
