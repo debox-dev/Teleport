@@ -114,7 +114,8 @@ namespace DeBox.Teleport.Core
             IPEndPoint ip = new IPEndPoint(IPAddress.Any, port);
 
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 0);
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendLowWater, 1);
             socket.Bind(ip);
 
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
@@ -201,7 +202,6 @@ namespace DeBox.Teleport.Core
 
         private void ClientSocketSend(Socket socket, byte[] data, int dataLength, SocketFlags socketFlags, EndPoint endpoint)
         {
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             if (Type == TransportType.Client)
             {
                 socket.Send(data, data.Length, socketFlags);
@@ -210,9 +210,6 @@ namespace DeBox.Teleport.Core
             {
                 socket.SendTo(data, data.Length, socketFlags, endpoint);
             }
-#else
-            socket.SendTo(data, data.Length, socketFlags, endpoint);
-#endif
         }
 
         private void InternalClient(object clientParamsObj)

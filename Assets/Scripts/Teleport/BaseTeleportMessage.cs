@@ -35,7 +35,7 @@ namespace DeBox.Teleport
 
         public virtual bool PreSendServerForClient(uint clientId)
         {
-            throw new System.NotImplementedException();
+            return true;
         }
 
         public virtual void Deserialize(TeleportReader reader)

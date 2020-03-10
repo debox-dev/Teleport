@@ -103,7 +103,7 @@ namespace DeBox.Teleport.Unity
         void OnClientDespawn(TeleportReader reader, GameObject despawned);
         void ServerSidePreSpawnToClient(TeleportWriter writer, GameObject spawned, object instanceConfig);
         GameObject SpawnOnServer(Vector3 position);
-        void OnServerDespawn(TeleportWriter writer, GameObject despawned);
+        void OnServerDespawn(GameObject despawned);
         GameObject GetInstanceById(ushort instanceId);
         ushort GetInstanceId(GameObject instance);
         ITeleportObjectSpawner Duplicate(TeleportObjectSpawnerType spawnerType);

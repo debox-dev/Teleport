@@ -21,6 +21,9 @@ namespace DeBox.Teleport.Tests
         [SerializeField]
         private float _spawnDuration = 60;
 
+        [SerializeField]
+        private float _despawnAfter = 120;
+
         private List<GameObject> _spawnedServerInstances = new List<GameObject>();
 
         private float RandomizeFloat(float magnitude)
@@ -61,17 +64,20 @@ namespace DeBox.Teleport.Tests
                 yield return null;
             }
             Debug.Log("Client connected!");
-
+            bool didDispawn = false;
 
             while (duration > 0)
             {
-                //_manager.SendToAllClients(new TestMessage());
                 yield return new WaitForSeconds(0.01f);
 
-                if (_manager.ClientState == TeleportClientProcessor.StateType.Connected)
+                if (_spawnDuration - duration >= _despawnAfter && !didDispawn)
                 {
-                    //_manager.SendToServer(new TestMessage());
-
+                    foreach (var instance in _spawnedServerInstances)
+                    {
+                        _manager.ServerSideDespawn(instance);
+                    }
+                    didDispawn = true;
+                    _spawnedServerInstances.Clear();
                 }
                 duration -= Time.deltaTime;
             }

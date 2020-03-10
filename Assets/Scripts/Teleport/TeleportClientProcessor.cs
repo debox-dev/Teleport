@@ -25,7 +25,7 @@ namespace DeBox.Teleport
         public event Action<uint, DisconnectReasonType> DisconnectedFromServer;
         public event Action<ITeleportMessage> MessageArrived;
 
-        private const float TIME_SYNC_MESSAGE_RATE_IN_SECONDS = 10;
+        private const float TIME_SYNC_MESSAGE_RATE_IN_SECONDS = 1;
         private const float TIME_SYNC_MAX_TIME_DRIFT_BEFORE_HARD_SET_IN_SECONDS = 1;
         private const float TIME_SYNC_MAX_TIME_DRIFT_MAGNITUDE = 0.1f;        
         private byte _authKey;

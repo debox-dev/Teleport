@@ -203,7 +203,8 @@ MonoBehaviour:
   _serverPrefab: {fileID: 8934495773799932054, guid: 39efa34324c12e548ba2557f94e29224,
     type: 3}
   _spawnedObjectCount: 20
-  _spawnDuration: 60
+  _spawnDuration: 20
+  _despawnAfter: 10
 --- !u!4 &1302919527
 Transform:
   m_ObjectHideFlags: 0

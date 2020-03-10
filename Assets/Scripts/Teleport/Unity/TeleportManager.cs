@@ -148,12 +148,12 @@ namespace DeBox.Teleport.Unity
             return spawner.SpawnOnServer(position);
         }
 
-        public void ServerSideDespawn(GameObject instance, byte channelId = 0)
+        public void ServerSideDespawn(GameObject instance)
         {
             var spawner = GetServerSpawnerForInstance(instance);
             var instanceId = spawner.GetInstanceId(instance);
             var message = new TeleportDespawnMessage(spawner, instanceId);
-            SendToClients(message, channelId);
+            SendToClients(message);
         }
 
         private GameObject ServerSideSpawnRetroactiveForClient(uint clientId, GameObject instance, byte channelId = 0)

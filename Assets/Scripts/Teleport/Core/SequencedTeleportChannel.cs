@@ -140,7 +140,7 @@ namespace DeBox.Teleport.Core
                 {
                     seqId = p.Key;
                     outboxItem = p.Value;
-                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 10000000)                    
+                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - 50000000)                    
                     {
                         outboxItem.lastSendTime = DateTime.UtcNow.Ticks;
                         InternalChannel.Send(outboxItem.data);

@@ -125,11 +125,12 @@ namespace DeBox.Teleport.Unity
             clientIdMap.Add(clientId);
         }
         
-        public void OnServerDespawn(TeleportWriter reader, GameObject despawned)
+        public void OnServerDespawn(GameObject despawned)
         {
             var instanceId = _instanceIdByInstance[despawned];
             _instanceIdByInstance.Remove(despawned);
             _instanceByInstanceId.Remove(instanceId);
+            _instanceIdClientIdSpawnMap.Remove(instanceId);
         }
 
         public GameObject SpawnOnServer(Vector3 position)
