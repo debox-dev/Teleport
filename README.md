@@ -233,4 +233,67 @@ BYTE 3  +-+[]
         +-+[]
 ```
 
+## Float compression
+
+Teleport hands out a simple way to compress your floats, Vector2, Vector3, Vector4 and Quaternions
+
+### Float to Short compression
+Use this to shorten 4 byte floats to 2 bytes
+
+#### FloatCompressionTypeShort.Short_One_Decimal
+```FloatCompressionTypeShort.Short_One_Decimals``` converts a float to a short with one decimal.
+Good for rough numbers that do not require too much accuracy, and can be large (4 digits.)
+
+For example: ```4.12551f => 41 => 4.1```
+
+Minimum Value: -3276.8
+Maximum Value: 3276.7
+
+#### FloatCompressionTypeShort.Short_Two_Decimals
+```FloatCompressionTypeShort.Short_Two_Decimals``` converts a float to a short with two decimals
+The resulting number can be a most three digits long before the decimal.
+For example: ```4.12551f => 412 => 4.12```
+
+Minimum Value: -327.68
+Maximum Value: 327.67
+
+#### FloatCompressionTypeShort.Short_Three_Decimals
+```FloatCompressionTypeShort.Short_Three_Decimals``` converts a float to a short with three decimals.
+Good for Vectors that have at most the magnitude of 1; for example directions.
+
+For example: ```4.12551f => 4125 => 4.1245```
+
+Minimum Value: -32.768
+Maximum Value: 32.767
+
+### Char compression
+Use char compression for really really small floats in order to trim 4 bytes to 1 byte
+
+#### Char_One_Decimal
+```FloatCompressionTypeChar.Char_One_Decimal``` 
+
+Minimum Value: -12.7
+Maximum Value: 12.8
+
+#### Char_Two_Decimals
+```FloatCompressionTypeChar.Char_Two_Decimals``` 
+
+Good for Vectors that have at most the magnitude of 1; for example directions.
+
+Minimum Value: -1.27
+Maximum Value: 1.28
+
+
+### Serializing with compression
+```
+writer.Write(Position, FloatCompressionTypeShort.Short_Two_Decimals);
+writer.Write(Rotation, FloatCompressionTypeShort.Short_Two_Decimals);
+```
+
+### Deserializing with compression
+```
+Position = reader.ReadVector3(FloatCompressionTypeShort.Short_Two_Decimals);
+Rotation = reader.ReadQuaternion(FloatCompressionTypeShort.Short_Two_Decimals);
+```
+
 
