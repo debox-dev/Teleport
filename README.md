@@ -315,32 +315,32 @@ public class MyMessage : BaseTeleportMessage
         Position = position;
     }
 
-	public override DeliveryTargetType GetDeliveryTarget()
-	{
-		return DeliveryTargetType.PerConnection;
-	}
-
-	// We don't have to implement Serialize now that we are PerConnection
-    public override void Serialize(DeBox.Teleport.Core.TeleportWriter writer)
+    public override DeliveryTargetType GetDeliveryTarget()
     {
-		throw new Exception("Don't expect this to be called!");
+        return DeliveryTargetType.PerConnection;
     }
 
-	public override bool SerializeForClient(TeleportWriter writer, uint clientId)
-	{
-		// Only the second client
-		if (GameUtils.CanPlayerSeeObjects(clientId))
-		{
-			writer.Write(Position);
-			return true;
-		}
-		return false;
-	}
+    // We don't have to implement Serialize now that we are PerConnection
+    public override void Serialize(DeBox.Teleport.Core.TeleportWriter writer)
+    {
+        throw new Exception("Don't expect this to be called!");
+    }
 
-	public override void Deserialize(TeleportReader reader)
-	{
-		Position = reader.ReadVector3();
-	}
+    public override bool SerializeForClient(TeleportWriter writer, uint clientId)
+    {
+        // Only the second client
+        if (GameUtils.CanPlayerSeeObjects(clientId))
+        {
+            writer.Write(Position);
+            return true;
+        }
+        return false;
+    }
+
+    public override void Deserialize(TeleportReader reader)
+    {
+        Position = reader.ReadVector3();
+    }
 }
 ```
 
