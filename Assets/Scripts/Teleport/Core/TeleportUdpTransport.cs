@@ -23,7 +23,8 @@ namespace DeBox.Teleport.Core
             public int port;
         }
 
-        private const int THREAD_SLEEP_DURATION = 10;
+        private const int THREAD_SLEEP_DURATION_IN_MS = 10;
+        private const int LISTEN_SOCKET_LINGER_TIME_IN_SECONDS = 10;
 
         private Thread _thread;
         private bool _stopRequested;
@@ -114,6 +115,7 @@ namespace DeBox.Teleport.Core
             IPEndPoint ip = new IPEndPoint(IPAddress.Any, port);
 
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
             socket.Bind(ip);
 
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
@@ -129,7 +131,7 @@ namespace DeBox.Teleport.Core
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
 
-                Thread.Sleep(THREAD_SLEEP_DURATION);
+                Thread.Sleep(THREAD_SLEEP_DURATION_IN_MS);
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.ReceiveFrom(data, ref endpoint);
@@ -216,6 +218,7 @@ namespace DeBox.Teleport.Core
             
             var clientParams = (ClientParams)clientParamsObj;
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
             var endpoint = new IPEndPoint(clientParams.address, clientParams.port);
             byte[] data = new byte[8096];
             byte[] packetData = new byte[8096];
@@ -233,7 +236,7 @@ namespace DeBox.Teleport.Core
             {
                 SendOutgoingDataAllChannelsOfAllEndpoints(socket, _endpointCollection);
                
-                Thread.Sleep(THREAD_SLEEP_DURATION);
+                Thread.Sleep(THREAD_SLEEP_DURATION_IN_MS);
                 while (socket.Available > 0)
                 {
                     receivedDataLength = socket.Receive(data);
