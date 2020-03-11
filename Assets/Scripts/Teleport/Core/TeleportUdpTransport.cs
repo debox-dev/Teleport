@@ -24,7 +24,6 @@ namespace DeBox.Teleport.Core
         }
 
         private const int THREAD_SLEEP_DURATION_IN_MS = 10;
-        private const int LISTEN_SOCKET_LINGER_TIME_IN_SECONDS = 10;
 
         private Thread _thread;
         private bool _stopRequested;

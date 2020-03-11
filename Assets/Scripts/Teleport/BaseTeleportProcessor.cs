@@ -9,7 +9,7 @@ namespace DeBox.Teleport
 {
     public abstract class BaseTeleportProcessor
     {
-        private const float RECEIVE_INCOMING_MESSAGES_RATE_IN_SECONDS = 0.1f;
+        private const float RECEIVE_INCOMING_MESSAGES_RATE_IN_SECONDS = 0.001f;
 
         public float LocalTime => Time.fixedTime;
 
