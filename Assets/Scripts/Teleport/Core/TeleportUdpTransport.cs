@@ -216,7 +216,6 @@ namespace DeBox.Teleport.Core
             
             var clientParams = (ClientParams)clientParamsObj;
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
             var endpoint = new IPEndPoint(clientParams.address, clientParams.port);
             byte[] data = new byte[8096];
             byte[] packetData = new byte[8096];
