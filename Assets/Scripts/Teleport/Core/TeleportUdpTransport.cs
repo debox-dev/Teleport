@@ -113,8 +113,7 @@ namespace DeBox.Teleport.Core
             byte[] data = new byte[8096];
             IPEndPoint ip = new IPEndPoint(IPAddress.Any, port);
 
-            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
+            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);            
             socket.Bind(ip);
 
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
