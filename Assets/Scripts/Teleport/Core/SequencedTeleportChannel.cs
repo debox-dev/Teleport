@@ -6,7 +6,7 @@ namespace DeBox.Teleport.Core
 {
     public class SequencedTeleportChannel : BaseTeleportProxyChannel
     {
-        private const int ACK_TIMEOUT_DURATION_IN_TICKS = 50000000;
+        private const int ACK_TIMEOUT_DURATION_IN_TICKS = 100000000;
 
         private class OutboxItem
         {
