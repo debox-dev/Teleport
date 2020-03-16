@@ -46,7 +46,7 @@ namespace DeBox.Teleport.Core
             _inbox = new Dictionary<ushort, InboxItem>();
             _outbox = new Dictionary<ushort, OutboxItem>();
             _outboxLock = new object();
-            _pendingAcksQueue = new ArrayQueue<ushort>(8096);
+            _pendingAcksQueue = new ArrayQueue<ushort>(80960);
         }
 
         public override void Receive(byte[] data, int startIndex, int length)
