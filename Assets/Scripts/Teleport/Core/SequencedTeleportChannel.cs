@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DeBox.Teleport.Logging;
 
 namespace DeBox.Teleport.Core
 {
@@ -11,6 +12,7 @@ namespace DeBox.Teleport.Core
 
         private class OutboxItem
         {
+            public ushort sequenceNumber;
             public byte[] data;
             public long nextSendTime;
         }
@@ -31,11 +33,13 @@ namespace DeBox.Teleport.Core
         private bool _sendAcks;
         private object _outboxLock;
         private ArrayQueue<ushort> _pendingAcksQueue;
+        private readonly BaseTeleportLogger _logger;
 
-        public SequencedTeleportChannel() : this(new SimpleTeleportChannel()) { }
+        public SequencedTeleportChannel(BaseTeleportLogger logger = null) : this(new SimpleTeleportChannel(), logger) { }
 
-        public SequencedTeleportChannel(BaseTeleportChannel internalChannel) : this(internalChannel, true)
-        {            
+        public SequencedTeleportChannel(BaseTeleportChannel internalChannel, BaseTeleportLogger logger = null) : this(internalChannel, true)
+        {
+            _logger = logger;
         }
 
         public SequencedTeleportChannel(BaseTeleportChannel internalChannel, bool sendAcks) : base(internalChannel)
@@ -56,16 +60,17 @@ namespace DeBox.Teleport.Core
             ushort sequenceNumber;
             
             if (_sendAcks && data[startIndex] == 0xff && data[startIndex + 1] == 0xff)
-            {
-                
+            {                
                 lock (_outboxLock)
                 {
                     sequenceNumber = BitConverter.ToUInt16(data, startIndex + 2);
+                    _logger?.Debug("SequencedTeleportChannel: Got ack for sequence: {0}", sequenceNumber);
                     _outbox.Remove(sequenceNumber);
                 }
                 return;
             }
             sequenceNumber = BitConverter.ToUInt16(data, startIndex);
+            _logger?.Debug("SequencedTeleportChannel: Got sequence: {0}, length: {1}", sequenceNumber, length);
             processedLength += sizeof(ushort);
             if (_inbox.ContainsKey(sequenceNumber) || _lastProcessedReceiveIndex >= sequenceNumber)
             {
@@ -81,6 +86,7 @@ namespace DeBox.Teleport.Core
             {
                 byte[] ackData = new byte[] { 0xff, 0xff, 0, 0 };
                 Array.Copy(BitConverter.GetBytes(sequenceNumber), 0, ackData, 2, 2);
+                _logger?.Debug("SequencedTeleportChannel: Dispatching ack: {0}", sequenceNumber);
                 Send(ackData);
                 _pendingAcksQueue.Enqueue(sequenceNumber);           
                 ProcessOutbox();
@@ -114,6 +120,7 @@ namespace DeBox.Teleport.Core
         {
             data = InternalChannel.PrepareToSend(data);
             byte[] sequenceBytes = BitConverter.GetBytes(_outgoingSequence);
+            _logger?.Debug("SequencedTeleportChannel: Prepare To Send: {0}, length: {1}", _outgoingSequence, data.Length);
             var newData = new byte[data.Length + sequenceBytes.Length];
             Array.Copy(sequenceBytes, 0, newData, 0, sequenceBytes.Length);
             Array.Copy(data, 0, newData, sequenceBytes.Length, data.Length);
@@ -121,7 +128,11 @@ namespace DeBox.Teleport.Core
             {
                 lock (_outboxLock)
                 {
-                    _outbox[_outgoingSequence] = new OutboxItem() { data = newData, nextSendTime = DateTime.UtcNow.Ticks + ACK_TIMEOUT_DURATION_IN_TICKS };
+                    _outbox[_outgoingSequence] = new OutboxItem() {
+                        sequenceNumber = _outgoingSequence,
+                        data = newData,
+                        nextSendTime = DateTime.UtcNow.Ticks + ACK_TIMEOUT_DURATION_IN_TICKS
+                    };
                 }
             }
             _outgoingSequence++;
@@ -145,6 +156,7 @@ namespace DeBox.Teleport.Core
                     if (outboxItem.nextSendTime < DateTime.UtcNow.Ticks)                    
                     {
                         outboxItem.nextSendTime = DateTime.UtcNow.Ticks + ACK_TIMEOUT_DURATION_IN_TICKS * (1 + (_outbox.Count / ACK_TIMEOUT_INCREMENT_PER_MESSAGE_COUNT));
+                        _logger?.Debug("SequencedTeleportChannel: Dispatching outbox: {0}, length: {1}", outboxItem.sequenceNumber, outboxItem.data.Length);
                         InternalChannel.Send(outboxItem.data);
                     }
                 }

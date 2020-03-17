@@ -320,7 +320,7 @@ MonoBehaviour:
   _clientPrefab: {fileID: 7013156604259496328, guid: 0518ac52d8dde2d4db04b639da530f25,
     type: 3}
   _syncState: 1
-  _stateUpdateRateInSeconds: 0.05
+  _stateUpdateRateInSeconds: 0
 --- !u!4 &1167679167
 Transform:
   m_ObjectHideFlags: 0
@@ -427,6 +427,7 @@ MonoBehaviour:
     ScrambleBitCount: 0
     ScrambleChance: 0
     DropChance: 0
+  _loggingLevel: 0
 --- !u!4 &1587157346
 Transform:
   m_ObjectHideFlags: 0

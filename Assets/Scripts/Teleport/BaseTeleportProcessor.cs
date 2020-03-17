@@ -17,7 +17,7 @@ namespace DeBox.Teleport
         private Dictionary<byte, Action<EndPoint, TeleportReader>> _incomingMessageProcessors;
         private TeleportUnityHelper _unityHelper;
         private float _nextHandleIncomingTime;
-        private bool _socketStarted;
+        private bool _socketStarted;        
 
         public bool IsOnline => _transport.ThreadStarted;
 

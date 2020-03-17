@@ -3,6 +3,7 @@ using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
 using DeBox.Teleport.Core;
+using DeBox.Teleport.Logging;
 
 namespace DeBox.Teleport.Unity
 {
@@ -47,6 +48,8 @@ namespace DeBox.Teleport.Unity
             return () => new TeleportPacketBuffer();
         }
 
+        protected virtual BaseTeleportLogger GetLogger() => null;
+
         private Func<BaseTeleportChannel>[] GetChannelCreators()
         {
             var channelTypes = GetChannelTypes();
@@ -60,7 +63,7 @@ namespace DeBox.Teleport.Unity
                         channelFunc = () => new SimpleTeleportChannel();
                         break;
                     case TeleportChannelType.SequencedReliable:
-                        channelFunc = () => new SequencedTeleportChannel(new SimpleTeleportChannel());
+                        channelFunc = () => new SequencedTeleportChannel(new SimpleTeleportChannel(), GetLogger());
                         break;
                     default:
                         throw new Exception("Don't know how to create channel type: " + channelTypes[i]);

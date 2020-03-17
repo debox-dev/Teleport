@@ -3,6 +3,7 @@ using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
 using DeBox.Teleport.Core;
+using DeBox.Teleport.Logging;
 
 namespace DeBox.Teleport.Unity
 {
@@ -18,6 +19,7 @@ namespace DeBox.Teleport.Unity
         [SerializeField] private float _playbackDelay = 0.3f;
         [Header("Chaos Generator")]
         [SerializeField] private TeleportChaoticPacketBuffer.ChaosSettings _chaosSettings = null;
+        [SerializeField] private LoggingLevelType _loggingLevel = LoggingLevelType.None;
 
         public float PlaybackDelay => _playbackDelay;
 
@@ -31,6 +33,17 @@ namespace DeBox.Teleport.Unity
         public void ConnectClient() { ConnectClient(_clientHostname, _port); }
 
         public void ConnectClient(string hostname, int port) { ConnectClient(hostname, port, _playbackDelay); }
+
+        protected override BaseTeleportLogger GetLogger()
+        {
+            if (_loggingLevel == LoggingLevelType.None)
+            {
+                return base.GetLogger();
+            }
+            var logger = new UnityTeleportLogger();
+            logger.SetLevel(_loggingLevel);
+            return logger;
+        }
 
         protected virtual void Start()
         {
