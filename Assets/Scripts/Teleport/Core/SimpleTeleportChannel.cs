@@ -1,4 +1,6 @@
 ﻿using System;
+using DeBox.Teleport.Logging;
+using DeBox.Teleport.Utils;
 
 namespace DeBox.Teleport.Core
 {
@@ -8,10 +10,15 @@ namespace DeBox.Teleport.Core
 
         private ArrayQueue<byte[]> _sendQueue;
 
-        public SimpleTeleportChannel(int maxReceiveBuffer = 80960, int maxSendBuffer = 80960)
+        private BaseTeleportLogger _logger;
+
+
+
+        public SimpleTeleportChannel(int maxReceiveBuffer = 80960, int maxSendBuffer = 80960, BaseTeleportLogger logger = null)
         {
             _receiveQueue = new ArrayQueue<byte[]>(maxReceiveBuffer);
             _sendQueue = new ArrayQueue<byte[]>(maxSendBuffer);
+            _logger = logger;
         }
 
         public override int IncomingMessageCount => _receiveQueue.Count;
@@ -22,12 +29,15 @@ namespace DeBox.Teleport.Core
         {
             var strippedData = new byte[length];
             Array.Copy(data, startIndex, strippedData, 0, length);
+            _logger.Debug("SimpleTeleportChannel: got data: " + TeleportDebugUtils.DebugString(strippedData) + "\n" + TeleportDebugUtils.DebugString(data));
             _receiveQueue.Enqueue(strippedData);
         }
 
         public override byte[] GetNextIncomingData()
         {
-            return _receiveQueue.Dequeue();
+            var deq =  _receiveQueue.Dequeue();
+            _logger.Debug("SimpleTeleportChannel: dispatching incoming data: " + TeleportDebugUtils.DebugString(deq));
+            return deq
         }
 
         public override byte[] GetNextOutgoingData()
