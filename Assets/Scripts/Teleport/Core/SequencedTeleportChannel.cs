@@ -75,7 +75,7 @@ namespace DeBox.Teleport.Core
             processedLength += sizeof(ushort);
             if (_inbox.ContainsKey(sequenceNumber) || _lastProcessedReceiveIndex >= sequenceNumber)
             {
-                Debug.LogWarning("Got same sequence twice: " + sequenceNumber);
+                _logger?.Warn("Got same sequence twice: " + sequenceNumber);
                 return;
             }
             _inbox[sequenceNumber] = new InboxItem() { data = data, startIndex = startIndex + processedLength, length = length - processedLength };
@@ -182,6 +182,7 @@ namespace DeBox.Teleport.Core
                 }
                 _inbox.Remove(nextIndex);
                 InternalChannel.Receive(inboxItem.data, inboxItem.startIndex, inboxItem.length);
+                _inbox.Remove(nextIndex);
                 _lastProcessedReceiveIndex = nextIndex;
             }
         }

@@ -77,7 +77,7 @@ namespace DeBox.Teleport.Core
                         {
                             using (var reader = new TeleportReader(stream))
                             {
-
+                                UnityEngine.Debug.Log("DESERIALIZE!!! " + deserializer.ToString() + " " + DeBox.Teleport.Utils.TeleportDebugUtils.DebugString(stream.ToArray()));
                                 deserializer(endpoint, reader);
                             }                                
                         }                            

@@ -63,7 +63,7 @@ namespace DeBox.Teleport.Unity
                         channelFunc = () => new SimpleTeleportChannel();
                         break;
                     case TeleportChannelType.SequencedReliable:
-                        channelFunc = () => new SequencedTeleportChannel(new SimpleTeleportChannel(), GetLogger());
+                        channelFunc = () => new SequencedTeleportChannel(new SimpleTeleportChannel(logger: GetLogger()), GetLogger());
                         break;
                     default:
                         throw new Exception("Don't know how to create channel type: " + channelTypes[i]);

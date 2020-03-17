@@ -29,15 +29,15 @@ namespace DeBox.Teleport.Core
         {
             var strippedData = new byte[length];
             Array.Copy(data, startIndex, strippedData, 0, length);
-            _logger.Debug("SimpleTeleportChannel: got data: " + TeleportDebugUtils.DebugString(strippedData) + "\n" + TeleportDebugUtils.DebugString(data));
+            _logger?.Debug("SimpleTeleportChannel: got data: " + TeleportDebugUtils.DebugString(strippedData));
             _receiveQueue.Enqueue(strippedData);
         }
 
         public override byte[] GetNextIncomingData()
         {
             var deq =  _receiveQueue.Dequeue();
-            _logger.Debug("SimpleTeleportChannel: dispatching incoming data: " + TeleportDebugUtils.DebugString(deq));
-            return deq
+            //_logger?.Debug("SimpleTeleportChannel: dispatching incoming data: " + TeleportDebugUtils.DebugString(deq));
+            return deq;
         }
 
         public override byte[] GetNextOutgoingData()
