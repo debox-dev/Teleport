@@ -5,8 +5,12 @@ namespace DeBox.Teleport.Unity
 {
     public class UnityTeleportLogger : BaseTeleportLogger
     {
+        private int _logSequence = 0;
+
         public override void LogInternal(LoggingLevelType levelType, string text, params object[] param)
         {
+            text = "[" + _logSequence.ToString("D10") + "] " + text;
+            _logSequence++;
             switch (levelType)
             {
                 case LoggingLevelType.Debug:
