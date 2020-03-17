@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DeBox.Teleport.Logging;
+using DeBox.Teleport.Utils;
 
 namespace DeBox.Teleport.Core
 {
@@ -70,7 +71,7 @@ namespace DeBox.Teleport.Core
                 return;
             }
             sequenceNumber = BitConverter.ToUInt16(data, startIndex);
-            _logger?.Debug("SequencedTeleportChannel: Got sequence: {0}, length: {1}", sequenceNumber, length);
+            _logger?.Debug("SequencedTeleportChannel: Got sequence: {0}, length: {1}, data: {2}", sequenceNumber, length, TeleportDebugUtils.DebugString(data, startIndex, length));
             processedLength += sizeof(ushort);
             if (_inbox.ContainsKey(sequenceNumber) || _lastProcessedReceiveIndex >= sequenceNumber)
             {
@@ -112,6 +113,7 @@ namespace DeBox.Teleport.Core
 
         public override void Send(byte[] data)
         {
+            _logger?.Debug("SequencedTeleportChannel: Sending data: " + TeleportDebugUtils.DebugString(data));
             InternalChannel.Send(data);
             ProcessOutbox();
         }
@@ -119,11 +121,11 @@ namespace DeBox.Teleport.Core
         public override byte[] PrepareToSend(byte[] data)
         {
             data = InternalChannel.PrepareToSend(data);
-            byte[] sequenceBytes = BitConverter.GetBytes(_outgoingSequence);
-            _logger?.Debug("SequencedTeleportChannel: Prepare To Send: {0}, length: {1}", _outgoingSequence, data.Length);
+            byte[] sequenceBytes = BitConverter.GetBytes(_outgoingSequence);            
             var newData = new byte[data.Length + sequenceBytes.Length];
             Array.Copy(sequenceBytes, 0, newData, 0, sequenceBytes.Length);
             Array.Copy(data, 0, newData, sequenceBytes.Length, data.Length);
+            _logger?.Debug("SequencedTeleportChannel: Prepare To Send: {0}, length: {1}, data: {2}", _outgoingSequence, newData.Length, TeleportDebugUtils.DebugString(newData));
             if (_sendAcks)
             {
                 lock (_outboxLock)
