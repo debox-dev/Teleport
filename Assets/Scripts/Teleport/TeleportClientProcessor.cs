@@ -37,11 +37,16 @@ namespace DeBox.Teleport
         private float _nextTimeSyncTime;
         private float _timedMessagePlaybackDelay;
         private float _handshakeTime;
+        private bool _isWaitingForTimesync;        
         
 
         public StateType State { get; private set; }
         public float ServerTime { get; private set; }
+        public int Ping => _isWaitingForTimesync ?  Mathf.Max(_lastKnownPing, MsSinceLastTimeRequestSent) : _lastKnownPing;
         public bool IsTimeSynchronized { get; private set; }
+
+        private int _lastKnownPing = 0;
+        private int MsSinceLastTimeRequestSent =>  Mathf.CeilToInt((LocalTime - _nextTimeSyncTime - TIME_SYNC_MESSAGE_RATE_IN_SECONDS) * 1000);
 
         public TeleportClientProcessor(TeleportUdpTransport transport, float timedMessagePlaybackDelay = 0.08f) : base(transport)
         {
@@ -159,6 +164,7 @@ namespace DeBox.Teleport
 
         private void SendTimesyncRequest()
         {
+            _isWaitingForTimesync = true;
             Send(SerializeTimeSyncRequest);
         }
 
@@ -227,11 +233,13 @@ namespace DeBox.Teleport
 
         private void HandleTimeSyncReponse(TeleportReader reader)
         {
+            _isWaitingForTimesync = false;
             bool shouldNotifyReady = !IsTimeSynchronized;
             var clientTimeOnRequestSent = reader.ReadSingle();
             var serverTimeOnRequestArrival = reader.ReadSingle();
             var clientTimeOnResponseArrival = LocalTime;
             var totalRoundtripDuration = clientTimeOnResponseArrival - clientTimeOnRequestSent;
+            _lastKnownPing = Mathf.CeilToInt(totalRoundtripDuration * 1000);
             if (totalRoundtripDuration > TIME_SYNC_MAX_RESPONSE_DELAY)
             {
                 Debug.LogWarning("Ignoring timesync response, took too long. RTT: " + totalRoundtripDuration);

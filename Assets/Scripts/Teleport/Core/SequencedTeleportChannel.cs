@@ -6,12 +6,13 @@ namespace DeBox.Teleport.Core
 {
     public class SequencedTeleportChannel : BaseTeleportProxyChannel
     {
-        private const int ACK_TIMEOUT_DURATION_IN_TICKS = 100000000;
+        private const int ACK_TIMEOUT_DURATION_IN_TICKS = 5000000;
+        private const int ACK_TIMEOUT_INCREMENT_PER_MESSAGE_COUNT = 100;
 
         private class OutboxItem
         {
             public byte[] data;
-            public long lastSendTime;
+            public long nextSendTime;
         }
 
         private class InboxItem
@@ -119,7 +120,7 @@ namespace DeBox.Teleport.Core
             {
                 lock (_outboxLock)
                 {
-                    _outbox[_outgoingSequence] = new OutboxItem() { data = newData, lastSendTime = DateTime.UtcNow.Ticks };
+                    _outbox[_outgoingSequence] = new OutboxItem() { data = newData, nextSendTime = DateTime.UtcNow.Ticks + ACK_TIMEOUT_DURATION_IN_TICKS };
                 }
             }
             _outgoingSequence++;
@@ -140,9 +141,9 @@ namespace DeBox.Teleport.Core
                 {
                     seqId = p.Key;
                     outboxItem = p.Value;
-                    if (outboxItem.lastSendTime < DateTime.UtcNow.Ticks - ACK_TIMEOUT_DURATION_IN_TICKS)                    
+                    if (outboxItem.nextSendTime < DateTime.UtcNow.Ticks)                    
                     {
-                        outboxItem.lastSendTime = DateTime.UtcNow.Ticks;
+                        outboxItem.nextSendTime = DateTime.UtcNow.Ticks + ACK_TIMEOUT_DURATION_IN_TICKS * (1 + (_outbox.Count / ACK_TIMEOUT_INCREMENT_PER_MESSAGE_COUNT));
                         InternalChannel.Send(outboxItem.data);
                     }
                 }

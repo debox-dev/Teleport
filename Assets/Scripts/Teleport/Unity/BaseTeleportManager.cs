@@ -22,6 +22,7 @@ namespace DeBox.Teleport.Unity
         public float ServerSideTime => _server != null ? _server.LocalTime : 0;
         public float ClientSideServerTime => _client != null ? _client.ServerTime : 0;
         public float ClientSideLocalTime => _client != null ? _client.LocalTime : 0;
+        public int ClientPing => _client == null ? 0 : _client.Ping;
 
         public IEnumerable<uint> ServerSideIterateConnectedClientIds()
         {
