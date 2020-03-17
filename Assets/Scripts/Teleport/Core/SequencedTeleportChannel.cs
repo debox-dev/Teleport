@@ -67,9 +67,10 @@ namespace DeBox.Teleport.Core
             }
             sequenceNumber = BitConverter.ToUInt16(data, startIndex);
             processedLength += sizeof(ushort);
-            if (_inbox.ContainsKey(sequenceNumber))
+            if (_inbox.ContainsKey(sequenceNumber) || _lastProcessedReceiveIndex >= sequenceNumber)
             {
                 Debug.LogWarning("Got same sequence twice: " + sequenceNumber);
+                return;
             }
             _inbox[sequenceNumber] = new InboxItem() { data = data, startIndex = startIndex + processedLength, length = length - processedLength };
             if (sequenceNumber > _lastReceiveIndex)
@@ -165,7 +166,7 @@ namespace DeBox.Teleport.Core
                 {
                     break;
                 }
-                
+                _inbox.Remove(nextIndex);
                 InternalChannel.Receive(inboxItem.data, inboxItem.startIndex, inboxItem.length);
                 _lastProcessedReceiveIndex = nextIndex;
             }
