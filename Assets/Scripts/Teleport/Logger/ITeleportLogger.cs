@@ -24,6 +24,7 @@ namespace DeBox.Teleport.Logging
 
         public void Debug(string text, params object[] param) => Log(LoggingLevelType.Debug, text, param);
         public void Info(string text, params object[] param) => Log(LoggingLevelType.Info, text, param);
+        public void Warn(string text, params object[] param) => Log(LoggingLevelType.Warn, text, param);
         public void Error(string text, params object[] param) => Log(LoggingLevelType.Error, text, param);
         public void Exception(Exception e) => Log(e);
 
