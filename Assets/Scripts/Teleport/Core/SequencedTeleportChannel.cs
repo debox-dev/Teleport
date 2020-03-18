@@ -7,7 +7,7 @@ namespace DeBox.Teleport.Core
     public class SequencedTeleportChannel : BaseTeleportProxyChannel
     {
         private const int ACK_TIMEOUT_DURATION_IN_TICKS = 5000000;
-        private const int ACK_TIMEOUT_INCREMENT_PER_MESSAGE_COUNT = 100;
+        private const int ACK_TIMEOUT_INCREMENT_PER_MESSAGE_COUNT = 50;
 
         private class OutboxItem
         {
@@ -54,25 +54,27 @@ namespace DeBox.Teleport.Core
         {            
             var processedLength = 0;
             ushort sequenceNumber;
+            var copiedData = new byte[length];
+            Array.Copy(data, startIndex, copiedData, 0, length);
             
-            if (_sendAcks && data[startIndex] == 0xff && data[startIndex + 1] == 0xff)
+            if (_sendAcks && copiedData[0] == 0xff && copiedData[1] == 0xff)
             {
                 
                 lock (_outboxLock)
                 {
-                    sequenceNumber = BitConverter.ToUInt16(data, startIndex + 2);
+                    sequenceNumber = BitConverter.ToUInt16(copiedData, 2);
                     _outbox.Remove(sequenceNumber);
                 }
                 return;
             }
-            sequenceNumber = BitConverter.ToUInt16(data, startIndex);
+            sequenceNumber = BitConverter.ToUInt16(copiedData, 0);
             processedLength += sizeof(ushort);
             if (_inbox.ContainsKey(sequenceNumber) || _lastProcessedReceiveIndex >= sequenceNumber)
             {
                 Debug.LogWarning("Got same sequence twice: " + sequenceNumber);
                 return;
             }
-            _inbox[sequenceNumber] = new InboxItem() { data = data, startIndex = startIndex + processedLength, length = length - processedLength };
+            _inbox[sequenceNumber] = new InboxItem() { data = copiedData, startIndex =  processedLength, length = length - processedLength };
             if (sequenceNumber > _lastReceiveIndex)
             {
                 _lastReceiveIndex = sequenceNumber;
