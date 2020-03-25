@@ -61,7 +61,7 @@ public class NetworkStarter : MonoBehaviour
         for (var i = 0; i < 10; i++)
         {
             var spawnPosition = Vector3.one * i;        
-            TeleportManager.Main.ServerSideSpawn(_spawnedPrefab, spawnPosition, null);
+            TeleportManager.Main.ServerSideSpawn(_spawnedPrefab, spawnPosition);
         }
    }
 }
