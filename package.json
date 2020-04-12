@@ -1,7 +1,7 @@
 {
 	"name": "com.debox.teleport",
 	"description": "A fast, lightweight, pure C# Unity realtime-game-networking framework.",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"unity": "2013.3",
 	"displayName": "Teleport Networking",
 	"dependencies": {}
