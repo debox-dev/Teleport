@@ -36,8 +36,15 @@ Teleport allows us to test the client and server simultaneously in the same scen
 4. Add the "TeleportManager" componend to the empty GameObject
 5. Choose a prefab you'd like to synchronize. Any prefab will do. There is no need to add anything to the prefab.
 6. Drag the prefab to the **Prefab Spawners** list of the `TeleportManager` component
-7. Create a connection script `NetworkStarter.cs`
+7. Create a connection script `NetworkStarter.cs` (See example below)
+8. Create a new empty GameObject in your scene and name it "NetworkStarter"
+9. Place the `NetworkStarter` component on the "NetworkStarter" GameObject
+10. Drage your prefab to the `NetworkStarter` component in the inspector
+11. Press play to see your prefab spawned for both server and client
+
+
 ```
+// NetworkStarter.cs
 using System.Collections;
 using UnityEngine;
 using DeBox.Teleport.Unity;
@@ -66,10 +73,6 @@ public class NetworkStarter : MonoBehaviour
    }
 }
 ```
-8. Create a new empty GameObject in your scene and name it "NetworkStarter"
-9. Place the `NetworkStarter` component on the "NetworkStarter" GameObject
-10. Drage your prefab to the `NetworkStarter` component in the inspector
-11. Press play to see your prefab spawned for both server and client
 
 ## Server Time Prediction
 Teleport automagically syncs the server time to the clients
