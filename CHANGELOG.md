@@ -1,3 +1,10 @@
+## [0.0.12](https://github.com/debox-dev/Teleport/compare/v0.0.11...v0.0.12) (2020-05-07)
+
+
+### Bug Fixes
+
+* Fixed package.json unity version ([cd873ff](https://github.com/debox-dev/Teleport/commit/cd873ff49e1f092ae89b8895addfafe9d433be25))
+
 ## [0.0.11](https://github.com/debox-dev/Teleport/compare/v0.0.10...v0.0.11) (2020-04-12)
 
 
